@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.10.0",
+    "@neondatabase/serverless": "^1.0.1",
     "@vercel/postgres": "^0.10.0",
     "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.5",
     "next": "15.5.2",
     "next-auth": "^4.24.11",
@@ -31,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
 }
