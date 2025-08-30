@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -97,10 +98,16 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
+        {/* Breadcrumb */}
+        <div className="-mt-2">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+          </Link>
+        </div>
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Upload Data</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Import Your Data</h1>
           <p className="text-muted-foreground">
             Import your product data from Excel files to visualize trends
           </p>
@@ -120,7 +127,6 @@ export default function UploadPage() {
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="file-upload">Select Excel File</Label>
 
                 {/* Hidden native input to avoid inconsistent browser styling */}
                 <input
@@ -132,7 +138,7 @@ export default function UploadPage() {
                   className="sr-only"
                 />
 
-                {/* Custom trigger area */}
+                {/* Large dropzone area */}
                 <label
                   htmlFor="file-upload"
                   onDragOver={(ev) => {
@@ -146,19 +152,19 @@ export default function UploadPage() {
                     const dropped = ev.dataTransfer?.files?.[0] ?? null;
                     setValidatedFile(dropped);
                   }}
-                  className={`flex items-center gap-3 rounded-lg border border-dashed p-4 transition-colors ${
+                  className={`flex h-56 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${
                     isDragOver ? "bg-accent/60" : "hover:bg-accent/40"
                   } ${isUploading ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
-                    <Upload className="h-5 w-5 text-primary" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
+                    <Upload className="h-7 w-7 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {file ? "Change selected file" : "Click to choose an Excel file"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">.xlsx or .xls · Max ~50MB</p>
-                  </div>
+                  <p className="text-base font-medium">
+                    {file ? "Drop another file to replace" : "Drop your Excel file here"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    · .xlsx or .xls · Max ~50MB
+                  </p>
                 </label>
 
                 {file && (

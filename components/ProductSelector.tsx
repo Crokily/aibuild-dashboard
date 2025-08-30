@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Product {
@@ -26,8 +28,11 @@ export function ProductSelector({ products, selectedProductId }: ProductSelector
 
   if (products.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground">
-        No products available. Please upload data first.
+      <div className="flex items-center gap-3 text-sm">
+        <span className="text-muted-foreground">No products yet.</span>
+        <Button asChild size="sm" variant="outline" className="cursor-pointer">
+          <Link href="/upload">Go upload data →</Link>
+        </Button>
       </div>
     );
   }

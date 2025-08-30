@@ -82,12 +82,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Analyze procurement, sales, and inventory trends for your products
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/upload">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Data
-            </Link>
-          </Button>
+          {/* Upload button removed; navigation available in top bar */}
         </div>
 
         {/* Product Selection */}
