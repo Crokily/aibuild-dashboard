@@ -99,12 +99,6 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
       <div className="mx-auto max-w-4xl space-y-6">
-        {/* Breadcrumb */}
-        <div className="-mt-2">
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-          </Link>
-        </div>
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Import Your Data</h1>
@@ -117,7 +111,6 @@ export default function UploadPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
               Excel File Upload
             </CardTitle>
             <CardDescription>
@@ -220,7 +213,12 @@ export default function UploadPage() {
                 </Button>
 
                 {uploadResult?.success && (
-                  <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => router.push("/dashboard")} 
+                    className="cursor-pointer"
+                  >
                     View Dashboard
                   </Button>
                 )}
@@ -232,12 +230,12 @@ export default function UploadPage() {
         {/* File Format Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Expected File Format</CardTitle>
+            <CardTitle>Expected File Format</CardTitle>
+            <CardDescription>
+              Your Excel file should contain the following columns:
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Your Excel file should contain the following columns:
-            </p>
             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
               <div className="space-y-1">
                 <p className="font-medium">Required Columns:</p>
