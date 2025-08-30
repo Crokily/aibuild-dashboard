@@ -1,9 +1,12 @@
 import { db } from "@/lib/db";
 import { products, dailyRecords } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { ProductSelector } from "@/components/ProductSelector";
-import { ProductChart } from "@/components/ProductChart";
+import { ProductSelector } from "../../components/ProductSelector";
+import { ProductChart } from "../../components/ProductChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
+import Link from "next/link";
 
 // Define the type for chart data
 export interface ChartDataPoint {
@@ -25,12 +28,15 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // Await searchParams in Next.js 15
+  const params = await searchParams;
+
   // Get all products for the selector
   const allProducts = await db.select().from(products).orderBy(asc(products.productCode));
 
   // Determine selected product ID from URL params
-  const selectedProductId = searchParams.productId 
-    ? parseInt(searchParams.productId as string) 
+  const selectedProductId = params.productId
+    ? parseInt(params.productId as string)
     : allProducts[0]?.id;
 
   let chartData: ChartDataPoint[] = [];
@@ -69,11 +75,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Analyze procurement, sales, and inventory trends for your products
-          </p>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Analyze procurement, sales, and inventory trends for your products
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/upload">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Data
+            </Link>
+          </Button>
         </div>
 
         {/* Product Selection */}

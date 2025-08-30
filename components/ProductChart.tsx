@@ -114,6 +114,7 @@ export function ProductChart({ data }: ProductChartProps) {
             dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
             name="Inventory (Units)"
+            connectNulls={false}
           />
           
           {/* Procurement Amount Line - Green */}
