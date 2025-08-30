@@ -11,12 +11,14 @@ import {
     uniqueIndex,
   } from 'drizzle-orm/pg-core';
   
-  // --- User Table ---
-  export const users = pgTable('users', {
-    id: serial('id').primaryKey(),
-    email: text('email').notNull().unique(),
-    hashedPassword: text('hashed_password').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  // --- NextAuth.js Tables ---
+  export const users = pgTable("user", {
+    id: text("id").notNull().primaryKey(),
+    name: text("name"),
+    email: text("email").notNull().unique(),
+    emailVerified: timestamp("emailVerified", { mode: "date" }),
+    image: text("image"),
+    password: text("password"), // Store hashed password
   });
   
   // --- Product Table ---
