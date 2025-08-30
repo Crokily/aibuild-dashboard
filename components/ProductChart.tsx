@@ -109,10 +109,10 @@ export function ProductChart({ data }: ProductChartProps) {
           <Line
             type="monotone"
             dataKey="inventory"
-            stroke="var(--primary)"
+            stroke="var(--chart-1)"
             strokeWidth={2}
-            dot={{ fill: "var(--primary)", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: "var(--primary)", strokeWidth: 2 }}
+            dot={{ fill: "var(--chart-1)", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "var(--chart-1)", strokeWidth: 2 }}
             name="Inventory (Units)"
             connectNulls
           />
@@ -121,10 +121,10 @@ export function ProductChart({ data }: ProductChartProps) {
           <Line
             type="monotone"
             dataKey="procurementAmount"
-            stroke="hsl(142 76% 36%)"
+            stroke="var(--chart-2)"
             strokeWidth={2}
-            dot={{ fill: "hsl(142 76% 36%)", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: "hsl(142 76% 36%)", strokeWidth: 2 }}
+            dot={{ fill: "var(--chart-2)", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "var(--chart-2)", strokeWidth: 2 }}
             name="Procurement Amount ($)"
           />
           
@@ -132,10 +132,10 @@ export function ProductChart({ data }: ProductChartProps) {
           <Line
             type="monotone"
             dataKey="salesAmount"
-            stroke="hsl(25 95% 53%)"
+            stroke="var(--chart-3)"
             strokeWidth={2}
-            dot={{ fill: "hsl(25 95% 53%)", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: "hsl(25 95% 53%)", strokeWidth: 2 }}
+            dot={{ fill: "var(--chart-3)", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "var(--chart-3)", strokeWidth: 2 }}
             name="Sales Amount ($)"
           />
         </LineChart>
