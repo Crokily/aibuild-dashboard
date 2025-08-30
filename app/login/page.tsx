@@ -51,19 +51,8 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4">
       <div className="w-full max-w-md space-y-8">
-        {/* Logo/Brand */}
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-            <LogIn className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            AI Build Dashboard
-          </h1>
-          <p className="text-muted-foreground">Welcome back</p>
-        </div>
-
-        <Card className="border-0 shadow-2xl bg-card/50 backdrop-blur-sm">
-          <CardHeader className="space-y-1 text-center pb-4">
+        <Card className="border-0 shadow-2xl bg-card backdrop-blur-sm ">
+          <CardHeader className="space-y-1 pb-4 border-b-1">
             <CardTitle className="text-2xl font-semibold">Login to Account</CardTitle>
             <CardDescription className="text-base">
               Enter your email and password to access the dashboard

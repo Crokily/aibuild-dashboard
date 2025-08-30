@@ -104,19 +104,9 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4">
       <div className="w-full max-w-md space-y-8">
-        {/* Logo/Brand */}
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-            <UserPlus className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            AI Build Dashboard
-          </h1>
-          <p className="text-muted-foreground">Create your account</p>
-        </div>
 
-        <Card className="border-0 shadow-2xl bg-card/50 backdrop-blur-sm">
-          <CardHeader className="space-y-1 text-center pb-4">
+        <Card className="border-0 shadow-2xl bg-card backdrop-blur-sm">
+          <CardHeader className="space-y-1 pb-4 border-b-1">
             <CardTitle className="text-2xl font-semibold">Register Account</CardTitle>
             <CardDescription className="text-base">
               Fill in the information below to create your account
@@ -261,7 +251,7 @@ export default function RegisterPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">OR</span>
+                  <span className="bg-card/50 px-2 text-muted-foreground">OR</span>
                 </div>
               </div>
 
