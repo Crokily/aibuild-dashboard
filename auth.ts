@@ -1,13 +1,11 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./lib/db";
 import { users } from "./lib/db/schema";
 
 export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -60,15 +58,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session?.user && user) {
-        session.user.id = user.id as string;
+    async session({ session, token, user }) {
+      if (session?.user) {
+        session.user.id = (token?.uid as string) ?? (token?.sub as string) ?? (user?.id as string);
       }
       return session;
     },
@@ -81,4 +79,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-
