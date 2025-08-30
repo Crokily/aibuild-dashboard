@@ -3,17 +3,9 @@ import { NextRequest } from 'next/server';
 import { POST } from '../../app/api/upload/route';
 import { getTestDb, setupTestDb, cleanupTestDb } from '../setup';
 import { products, dailyRecords } from '../../lib/db/schema';
-import { eq } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
 
-// Mock Next.js response
-const createMockResponse = (data: any, status = 200) => {
-  return {
-    json: () => Promise.resolve(data),
-    status,
-  } as any;
-};
 
 describe('/api/upload', () => {
   beforeEach(async () => {
