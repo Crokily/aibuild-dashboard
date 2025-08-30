@@ -29,7 +29,7 @@ export default function NavBar() {
   const { data: session, status } = useSession();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-secondary/90 backdrop-blur supports-[backdrop-filter]:bg-secondary/70 shadow-sm">
+    <header className="w-full border-b bg-secondary/90 backdrop-blur supports-[backdrop-filter]:bg-secondary/70 shadow-sm">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
