@@ -34,14 +34,14 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError("邮箱或密码错误，请重试");
+        setError("Invalid email or password, please try again");
       } else if (result?.ok) {
-        // 登录成功，重定向到回调URL
+        // Login successful, redirect to callback URL
         router.push(callbackUrl);
         router.refresh();
       }
     } catch (error) {
-      setError("登录失败，请稍后再试");
+      setError("Login failed, please try again later");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -59,14 +59,14 @@ function LoginForm() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             AI Build Dashboard
           </h1>
-          <p className="text-muted-foreground">欢迎回来</p>
+          <p className="text-muted-foreground">Welcome back</p>
         </div>
 
         <Card className="border-0 shadow-2xl bg-card/50 backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center pb-4">
-            <CardTitle className="text-2xl font-semibold">登录账户</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Login to Account</CardTitle>
             <CardDescription className="text-base">
-              输入您的邮箱和密码来访问仪表盘
+              Enter your email and password to access the dashboard
             </CardDescription>
           </CardHeader>
           
@@ -74,7 +74,7 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  邮箱地址
+                  Email Address
                 </Label>
                 <Input
                   id="email"
@@ -90,13 +90,13 @@ function LoginForm() {
               
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  密码
+                  Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="输入密码"
+                    placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -132,12 +132,12 @@ function LoginForm() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    登录中...
+                    Logging in...
                   </>
                 ) : (
                   <>
                     <LogIn className="mr-2 h-5 w-5" />
-                    登录
+                    Login
                   </>
                 )}
               </Button>
@@ -149,17 +149,17 @@ function LoginForm() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">或</span>
+                  <span className="bg-card px-2 text-muted-foreground">OR</span>
                 </div>
               </div>
 
               <div className="text-center text-sm">
-                <span className="text-muted-foreground">还没有账户？</span>
-                <Link 
-                  href="/register" 
+                <span className="text-muted-foreground">Don't have an account?</span>
+                <Link
+                  href="/register"
                   className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1"
                 >
-                  立即注册
+                  Register now
                 </Link>
               </div>
             </div>
@@ -167,7 +167,7 @@ function LoginForm() {
         </Card>
 
         <div className="text-center text-xs text-muted-foreground">
-          <p>登录即表示您同意我们的服务条款和隐私政策</p>
+          <p>By logging in, you agree to our Terms of Service and Privacy Policy</p>
         </div>
       </div>
     </div>

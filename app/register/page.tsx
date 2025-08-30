@@ -22,7 +22,7 @@ export default function RegisterPage() {
   
   const router = useRouter();
 
-  // 密码强度检查
+  // Password strength validation
   const isPasswordValid = password.length >= 6;
   const doPasswordsMatch = password === confirmPassword;
 
@@ -31,15 +31,15 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError("");
 
-    // 前端验证
+    // Client-side validation
     if (!isPasswordValid) {
-      setError("密码长度至少为6位");
+      setError("Password must be at least 6 characters long");
       setIsLoading(false);
       return;
     }
 
     if (!doPasswordsMatch) {
-      setError("两次输入的密码不一致");
+      setError("Passwords do not match");
       setIsLoading(false);
       return;
     }
@@ -61,15 +61,15 @@ export default function RegisterPage() {
 
       if (response.ok) {
         setSuccess(true);
-        // 3秒后跳转到登录页
+        // Redirect to login page after 3 seconds
         setTimeout(() => {
           router.push("/login");
         }, 3000);
       } else {
-        setError(data.error || "注册失败，请稍后再试");
+        setError(data.error || "Registration failed, please try again later");
       }
     } catch (error) {
-      setError("网络错误，请稍后再试");
+      setError("Network error, please try again later");
       console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
@@ -86,13 +86,13 @@ export default function RegisterPage() {
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold text-green-600">注册成功！</h2>
+                <h2 className="text-2xl font-semibold text-green-600">Registration Successful!</h2>
                 <p className="text-muted-foreground">
-                  您的账户已创建成功，3秒后将自动跳转到登录页面。
+                  Your account has been created successfully. You will be redirected to the login page in 3 seconds.
                 </p>
               </div>
               <Button asChild className="w-full">
-                <Link href="/login">立即登录</Link>
+                <Link href="/login">Login Now</Link>
               </Button>
             </CardContent>
           </Card>
@@ -112,14 +112,14 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             AI Build Dashboard
           </h1>
-          <p className="text-muted-foreground">创建您的账户</p>
+          <p className="text-muted-foreground">Create your account</p>
         </div>
 
         <Card className="border-0 shadow-2xl bg-card/50 backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center pb-4">
-            <CardTitle className="text-2xl font-semibold">注册账户</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Register Account</CardTitle>
             <CardDescription className="text-base">
-              填写下方信息来创建您的账户
+              Fill in the information below to create your account
             </CardDescription>
           </CardHeader>
           
@@ -127,12 +127,12 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium">
-                  姓名 <span className="text-muted-foreground text-xs">(可选)</span>
+                  Name <span className="text-muted-foreground text-xs">(Optional)</span>
                 </Label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="您的姓名"
+                  placeholder="Your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isLoading}
@@ -142,7 +142,7 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  邮箱地址 <span className="text-red-500">*</span>
+                  Email Address <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="email"
@@ -158,13 +158,13 @@ export default function RegisterPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  密码 <span className="text-red-500">*</span>
+                  Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="至少6位密码"
+                    placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -187,7 +187,7 @@ export default function RegisterPage() {
                 {password && (
                   <div className="text-xs">
                     <span className={isPasswordValid ? "text-green-600" : "text-red-500"}>
-                      {isPasswordValid ? "✓" : "✗"} 密码长度至少6位
+                      {isPasswordValid ? "✓" : "✗"} Password must be at least 6 characters
                     </span>
                   </div>
                 )}
@@ -195,13 +195,13 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                  确认密码 <span className="text-red-500">*</span>
+                  Confirm Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="再次输入密码"
+                    placeholder="Re-enter password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -224,7 +224,7 @@ export default function RegisterPage() {
                 {confirmPassword && (
                   <div className="text-xs">
                     <span className={doPasswordsMatch ? "text-green-600" : "text-red-500"}>
-                      {doPasswordsMatch ? "✓" : "✗"} 密码匹配
+                      {doPasswordsMatch ? "✓" : "✗"} Passwords match
                     </span>
                   </div>
                 )}
@@ -244,12 +244,12 @@ export default function RegisterPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    注册中...
+                    Registering...
                   </>
                 ) : (
                   <>
                     <UserPlus className="mr-2 h-5 w-5" />
-                    创建账户
+                    Create Account
                   </>
                 )}
               </Button>
@@ -261,17 +261,17 @@ export default function RegisterPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">或</span>
+                  <span className="bg-card px-2 text-muted-foreground">OR</span>
                 </div>
               </div>
 
               <div className="text-center text-sm">
-                <span className="text-muted-foreground">已有账户？</span>
-                <Link 
-                  href="/login" 
+                <span className="text-muted-foreground">Already have an account?</span>
+                <Link
+                  href="/login"
                   className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1"
                 >
-                  立即登录
+                  Login now
                 </Link>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function RegisterPage() {
         </Card>
 
         <div className="text-center text-xs text-muted-foreground">
-          <p>注册即表示您同意我们的服务条款和隐私政策</p>
+          <p>By registering, you agree to our Terms of Service and Privacy Policy</p>
         </div>
       </div>
     </div>

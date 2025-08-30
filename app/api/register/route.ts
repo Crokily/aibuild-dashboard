@@ -10,31 +10,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, email, password } = body;
 
-    // 基本输入验证
+    // Basic input validation
     if (!email || !password) {
       return NextResponse.json(
-        { error: "邮箱和密码为必填项" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: "密码长度至少为6位" },
+        { error: "Password must be at least 6 characters long" },
         { status: 400 }
       );
     }
 
-    // 邮箱格式验证
+    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "邮箱格式不正确" },
+        { error: "Invalid email format" },
         { status: 400 }
       );
     }
 
-    // 检查用户是否已存在
+    // Check if user already exists
     const [existingUser] = await db
       .select()
       .from(users)
@@ -43,19 +43,19 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "该邮箱已注册" },
+        { error: "Email already registered" },
         { status: 409 }
       );
     }
 
-    // 加密密码
+    // Hash password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // 生成用户ID
+    // Generate user ID
     const userId = randomUUID();
 
-    // 创建用户
+    // Create user
     const [newUser] = await db
       .insert(users)
       .values({
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "注册成功",
+        message: "Registration successful",
         user: {
           id: newUser.id,
           name: newUser.name,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "注册失败，请稍后再试" },
+      { error: "Registration failed, please try again later" },
       { status: 500 }
     );
   }

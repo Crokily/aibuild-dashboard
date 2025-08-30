@@ -18,7 +18,7 @@ import {
     email: text("email").notNull().unique(),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
-    password: text("password"), // 用于存储加密后的密码
+    password: text("password"), // Store hashed password
   });
   
   // --- Product Table ---
