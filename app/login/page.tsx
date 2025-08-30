@@ -19,7 +19,27 @@ function LoginForm() {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
+  // Validate callback URL to prevent open redirect attacks
+  const validateCallbackUrl = (url: string | null): string => {
+    if (!url) return "/dashboard";
+
+    // Only allow relative paths (starting with /) to prevent open redirect attacks
+    if (url.startsWith("/")) {
+      // Additional validation: ensure it's a valid relative path
+      try {
+        new URL(url, window.location.origin);
+        return url;
+      } catch {
+        // Invalid relative URL format
+      }
+    }
+
+    // Default fallback for any external or invalid URL
+    return "/dashboard";
+  };
+
+  const callbackUrl = validateCallbackUrl(searchParams.get("callbackUrl"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
