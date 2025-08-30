@@ -1,18 +1,12 @@
-import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./lib/db";
 import { users } from "./lib/db/schema";
 
-
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db),
   providers: [
     CredentialsProvider({
@@ -34,7 +28,6 @@ export const {
         }
 
         try {
-          // 从数据库查找用户
           const [user] = await db
             .select()
             .from(users)
@@ -45,7 +38,6 @@ export const {
             return null;
           }
 
-          // 验证密码
           const passwordMatch = await bcrypt.compare(
             credentials.password,
             user.password
@@ -55,7 +47,6 @@ export const {
             return null;
           }
 
-          // 返回用户信息（不包含密码）
           return {
             id: user.id,
             name: user.name,
@@ -76,18 +67,18 @@ export const {
   },
   callbacks: {
     async session({ session, user }) {
-      // 确保session包含用户ID
       if (session?.user && user) {
-        session.user.id = user.id;
+        session.user.id = user.id as string;
       }
       return session;
     },
     async jwt({ user, token }) {
       if (user) {
-        token.uid = user.id;
+        token.uid = (user as { id?: string }).id;
       }
       return token;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
