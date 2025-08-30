@@ -105,16 +105,16 @@ export function ProductChart({ data }: ProductChartProps) {
             iconType="line"
           />
           
-          {/* Inventory Line - Blue */}
+          {/* Inventory Line - Primary color */}
           <Line
             type="monotone"
             dataKey="inventory"
-            stroke="hsl(var(--primary))"
+            stroke="var(--primary)"
             strokeWidth={2}
-            dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+            dot={{ fill: "var(--primary)", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "var(--primary)", strokeWidth: 2 }}
             name="Inventory (Units)"
-            connectNulls={false}
+            connectNulls
           />
           
           {/* Procurement Amount Line - Green */}
