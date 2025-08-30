@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -19,25 +18,48 @@ export default function UploadPage() {
       recordsCreated: number;
     };
   } | null>(null);
-  
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const router = useRouter();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
+  const acceptExt = [".xlsx", ".xls"] as const;
+  const acceptMime = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+  ];
+
+  const validateFile = (f: File | null): string | null => {
+    if (!f) return "No file selected";
+    const name = f.name.toLowerCase();
+    const hasExt = acceptExt.some((ext) => name.endsWith(ext));
+    const hasMime = acceptMime.includes(f.type);
+    if (!hasExt && !hasMime) return "Only .xlsx or .xls files are allowed";
+    const maxMB = 50;
+    if (f.size > maxMB * 1024 * 1024) return `File must be <= ${maxMB}MB`;
+    return null;
+  };
+
+  const setValidatedFile = (f: File | null) => {
+    const err = validateFile(f);
+    if (err) {
+      setFile(null);
+      setUploadResult({ success: false, message: err });
+    } else {
+      setFile(f);
       setUploadResult(null);
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] ?? null;
+    setValidatedFile(selectedFile);
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!file) {
-      setUploadResult({
-        success: false,
-        message: "Please select a file to upload"
-      });
+      setUploadResult({ success: false, message: "Please select a file to upload" });
       return;
     }
 
@@ -48,37 +70,26 @@ export default function UploadPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await response.json();
 
       if (response.ok) {
         setUploadResult({
           success: true,
           message: result.message || "File uploaded successfully",
-          summary: result.summary
+          summary: result.summary,
         });
-        
+
         // Reset form
         setFile(null);
-        const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+        const fileInput = document.getElementById("file-upload") as HTMLInputElement | null;
         if (fileInput) fileInput.value = "";
-        
       } else {
-        setUploadResult({
-          success: false,
-          message: result.error || "Upload failed"
-        });
+        setUploadResult({ success: false, message: result.error || "Upload failed" });
       }
     } catch (error) {
-      setUploadResult({
-        success: false,
-        message: "Network error occurred. Please try again."
-      });
       console.error("Upload error:", error);
+      setUploadResult({ success: false, message: "Network error occurred. Please try again." });
     } finally {
       setIsUploading(false);
     }
@@ -86,7 +97,7 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Upload Data</h1>
@@ -99,7 +110,7 @@ export default function UploadPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
+              <Upload className="h-5 w-5" />
               Excel File Upload
             </CardTitle>
             <CardDescription>
@@ -110,44 +121,77 @@ export default function UploadPage() {
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="file-upload">Select Excel File</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleFileChange}
-                    disabled={isUploading}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                  />
-                </div>
-                
+
+                {/* Hidden native input to avoid inconsistent browser styling */}
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                  className="sr-only"
+                />
+
+                {/* Custom trigger area */}
+                <label
+                  htmlFor="file-upload"
+                  onDragOver={(ev) => {
+                    ev.preventDefault();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={(ev) => {
+                    ev.preventDefault();
+                    setIsDragOver(false);
+                    const dropped = ev.dataTransfer?.files?.[0] ?? null;
+                    setValidatedFile(dropped);
+                  }}
+                  className={`flex items-center gap-3 rounded-lg border border-dashed p-4 transition-colors ${
+                    isDragOver ? "bg-accent/60" : "hover:bg-accent/40"
+                  } ${isUploading ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+                    <Upload className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {file ? "Change selected file" : "Click to choose an Excel file"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">.xlsx or .xls · Max ~50MB</p>
+                  </div>
+                </label>
+
                 {file && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                    <FileText className="w-4 h-4" />
-                    <span>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    <span>
+                      {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    </span>
                   </div>
                 )}
               </div>
 
               {/* Upload Result */}
               {uploadResult && (
-                <div className={`p-4 rounded-lg border ${
-                  uploadResult.success 
-                    ? "bg-green-50 border-green-200 text-green-800" 
-                    : "bg-red-50 border-red-200 text-red-800"
-                }`}>
+                <div
+                  className={`rounded-lg border p-4 ${
+                    uploadResult.success
+                      ? "border-green-200 bg-green-50 text-green-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                  }`}
+                >
                   <div className="flex items-start gap-2">
                     {uploadResult.success ? (
-                      <CheckCircle className="w-5 h-5 mt-0.5 text-green-600" />
+                      <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 mt-0.5 text-red-600" />
+                      <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
                     )}
                     <div className="space-y-1">
                       <p className="font-medium">{uploadResult.message}</p>
                       {uploadResult.success && uploadResult.summary && (
                         <div className="text-sm">
-                          <p>• Products processed: {uploadResult.summary.productsProcessed}</p>
-                          <p>• Records created: {uploadResult.summary.recordsCreated}</p>
+                          <p>Products processed: {uploadResult.summary.productsProcessed}</p>
+                          <p>Records created: {uploadResult.summary.recordsCreated}</p>
                         </div>
                       )}
                     </div>
@@ -157,30 +201,20 @@ export default function UploadPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={!file || isUploading}
-                  className="flex-1"
-                >
+                <Button type="submit" disabled={!file || isUploading} className="flex-1">
                   {isUploading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
                     </>
                   ) : (
                     <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload File
+                      <Upload className="mr-2 h-4 w-4" /> Upload File
                     </>
                   )}
                 </Button>
-                
+
                 {uploadResult?.success && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push("/dashboard")}
-                  >
+                  <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
                     View Dashboard
                   </Button>
                 )}
@@ -198,10 +232,10 @@ export default function UploadPage() {
             <p className="text-sm text-muted-foreground">
               Your Excel file should contain the following columns:
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
               <div className="space-y-1">
                 <p className="font-medium">Required Columns:</p>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                   <li>ID (Product Code)</li>
                   <li>Product Name</li>
                   <li>Opening Inventory</li>
@@ -209,7 +243,7 @@ export default function UploadPage() {
               </div>
               <div className="space-y-1">
                 <p className="font-medium">Daily Columns (Day 1, 2, 3...):</p>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                   <li>Procurement Qty (Day X)</li>
                   <li>Procurement Price (Day X)</li>
                   <li>Sales Qty (Day X)</li>
