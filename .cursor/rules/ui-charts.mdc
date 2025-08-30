@@ -1,0 +1,10 @@
+---
+description: UI conventions and Recharts usage
+---
+### UI and charts rules
+
+- Server fetch, client render: fetch product and daily records in Server Components, pass to a Client chart component.
+- Charts live in a Client Component (e.g., `components/ProductChart.tsx`) and use Recharts (`LineChart`, `Line`, `XAxis`, `YAxis`, `Tooltip`).
+- Lines to include: `closingInventory`, `procurementAmount` (qty * price), `salesAmount` (qty * price).
+- Use dates on the X axis and numerical values on Y.
+- Provide loading and error UI for upload and dashboard interactions.

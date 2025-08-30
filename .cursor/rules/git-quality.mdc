@@ -1,0 +1,10 @@
+---
+description: Git workflow, CI quality gates, and reviews
+---
+### Git and quality rules
+
+- Use conventional commits for clarity (feat, fix, docs, refactor, chore).
+- Keep PRs small and focused; include summary and screenshots for UI changes.
+- Ensure `npm run build` and lint pass locally before pushing.
+- For schema changes, run migrations and document impact in PR description.
+- Protect `master` with PRs; avoid direct pushes when collaborating.

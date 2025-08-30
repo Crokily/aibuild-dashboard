@@ -1,0 +1,12 @@
+---
+globs: *.ts,*.tsx
+---
+### TypeScript and React style
+
+- Use explicit types for public APIs and function returns; avoid `any`.
+- Prefer descriptive names; avoid abbreviations.
+- Use early returns and handle errors explicitly; avoid deep nesting.
+- Do not catch and ignore errors. Bubble with context or return typed results.
+- Match existing formatting and ESLint rules in [`eslint.config.mjs`](mdc:eslint.config.mjs).
+- In Client Components, avoid heavy server-only modules; in Server Components, avoid browser-only APIs.
+- Import from app aliases consistently; keep imports sorted and deduplicated.

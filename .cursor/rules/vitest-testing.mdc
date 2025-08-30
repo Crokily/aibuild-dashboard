@@ -1,0 +1,119 @@
+---
+description: Vitest testing framework guidelines
+---
+
+### Vitest Testing Framework
+
+#### Test Structure and Organization
+- All tests are located in the `test/` directory
+- Test data files are placed in `test/data/` folder
+- Test files should be named with `.test.ts` or `.spec.ts` suffix
+- Use descriptive test names that explain what is being tested
+
+#### Test Configuration
+- Vitest is configured in `vitest.config.ts` with path aliases
+- Use `@/` alias for imports in tests (matches the project alias)
+- Test environment variables can be configured in `.env.test` or directly in environment
+
+#### Test Patterns
+- Use `describe()` blocks to group related tests
+- Use `it()` or `test()` for individual test cases
+- Follow the AAA pattern: Arrange, Act, Assert
+- Mock external dependencies when testing isolated units
+- Use realistic test data from `test/data/` folder
+
+#### API Testing Guidelines
+- Test API routes by importing the route handler directly
+- Mock database connections and external services
+- Test both success and error scenarios
+- Validate response structure and status codes
+- Use `beforeEach()` and `afterEach()` for test setup/teardown
+
+#### Example Test Structure
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+
+describe('API Upload Route', () => {
+  beforeEach(() => {
+    // Setup test environment
+  });
+
+  it('should handle valid Excel file upload', async () => {
+    // Arrange
+    const testData = /* load from test/data/ProductData.xlsx */;
+
+    // Act
+    const result = await uploadHandler(testData);
+
+    // Assert
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
+  });
+
+  it('should reject invalid file formats', async () => {
+    // Test error scenarios
+  });
+});
+```
+
+#### Running Tests
+- `npm run test` - Run all tests
+- `npm run test:ui` - Run tests with UI interface
+- Tests should be run before commits to ensure code quality### Vitest Testing Framework
+
+#### Test Structure and Organization
+- All tests are located in the `test/` directory
+- Test data files are placed in `test/data/` folder
+- Test files should be named with `.test.ts` or `.spec.ts` suffix
+- Use descriptive test names that explain what is being tested
+
+#### Test Configuration
+- Vitest is configured in `vitest.config.ts` with path aliases
+- Use `@/` alias for imports in tests (matches the project alias)
+- Test environment variables can be configured in `.env.test` or directly in environment
+
+#### Test Patterns
+- Use `describe()` blocks to group related tests
+- Use `it()` or `test()` for individual test cases
+- Follow the AAA pattern: Arrange, Act, Assert
+- Mock external dependencies when testing isolated units
+- Use realistic test data from `test/data/` folder
+
+#### API Testing Guidelines
+- Test API routes by importing the route handler directly
+- Mock database connections and external services
+- Test both success and error scenarios
+- Validate response structure and status codes
+- Use `beforeEach()` and `afterEach()` for test setup/teardown
+
+#### Example Test Structure
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+
+describe('API Upload Route', () => {
+  beforeEach(() => {
+    // Setup test environment
+  });
+
+  it('should handle valid Excel file upload', async () => {
+    // Arrange
+    const testData = /* load from test/data/ProductData.xlsx */;
+
+    // Act
+    const result = await uploadHandler(testData);
+
+    // Assert
+    expect(result.status).toBe(200);
+    expect(result.data).toBeDefined();
+  });
+
+  it('should reject invalid file formats', async () => {
+    // Test error scenarios
+  });
+});
+```
+
+#### Running Tests
+- `npm run test` - Run all tests
+- `npm run test:ui` - Run tests with UI interface
+- Tests should be run before commits to ensure code quality
