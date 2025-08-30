@@ -1,0 +1,11 @@
+---
+globs: app/**/*.ts,app/**/*.tsx
+---
+### Next.js App Router rules
+
+- File routing under `app/`; pages are `page.tsx`, route handlers are `app/api/**/route.ts`.
+- Server Components by default. Add "use client" only when needed (state, effects, events, Recharts).
+- Prefer server data fetching directly in Server Components using Drizzle (no fetch layer when local).
+- For dynamic data by URL params or search params, read them in the Server Component.
+- Route handlers must be Request/Response Web APIs and return `NextResponse` compatible values.
+- Respect caching semantics: for authenticated or per-user data, mark as dynamic or revalidate 0.

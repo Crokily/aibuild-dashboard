@@ -1,0 +1,10 @@
+---
+description: Drizzle ORM schema, queries, and migrations for Postgres
+---
+### Drizzle ORM usage
+
+- Define tables in [`lib/db/schema.ts`](mdc:lib/db/schema.ts). Keep columns typed and constrained.
+- Use the shared DB client from [`lib/db/index.ts`](mdc:lib/db/index.ts). Do not instantiate per request.
+- Wrap multi-record writes in `db.transaction(async tx => { ... })` for atomicity.
+- Prefer compiled query builders over raw SQL where possible.
+- Migrations: use `drizzle-kit` configured by [`drizzle.config.ts`](mdc:drizzle.config.ts); push with package script.

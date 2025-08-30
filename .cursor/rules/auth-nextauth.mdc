@@ -1,0 +1,11 @@
+---
+description: NextAuth credentials auth and middleware guidance
+---
+### Authentication rules
+
+- Auth route: `app/api/auth/[...nextauth]/route.ts` with Credentials Provider.
+- Validate user by email/password against Drizzle `users` table using `bcrypt.compare`.
+- Use Drizzle Adapter for session/user persistence where applicable.
+- Generate `NEXTAUTH_SECRET` and set it in env for all environments.
+- Middleware in `middleware.ts` should protect routes like `/dashboard` and `/upload`, redirect unauthenticated users to `/login`.
+- Client login page should call `signIn('credentials', ...)` and handle errors gracefully.

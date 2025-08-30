@@ -1,0 +1,10 @@
+---
+description: Excel upload API route expectations and data processing
+---
+### Upload API contract
+
+- Route: `app/api/upload/route.ts` accepts `POST` with `multipart/form-data` containing a file field.
+- Parse Excel using `xlsx` into JSON rows.
+- Transform wide sheet to long-form daily records per product and per date.
+- Insert new products and daily records inside a single transaction to ensure consistency.
+- Validate inputs; reject oversized files; return JSON with summary counts.

@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+### Project structure guide
+
+- The app entry uses Next.js App Router under `app/`.
+- Layout and globals: see [`app/layout.tsx`](mdc:app/layout.tsx) and [`app/globals.css`](mdc:app/globals.css).
+- Home page: [`app/page.tsx`](mdc:app/page.tsx).
+- API routes live in `app/api/**/route.ts`.
+- Database:
+  - Drizzle client and helpers: [`lib/db/index.ts`](mdc:lib/db/index.ts)
+  - Schema: [`lib/db/schema.ts`](mdc:lib/db/schema.ts)
+  - Drizzle config: [`drizzle.config.ts`](mdc:drizzle.config.ts)
+- Next config: [`next.config.ts`](mdc:next.config.ts), TS config: [`tsconfig.json`](mdc:tsconfig.json), ESLint: [`eslint.config.mjs`](mdc:eslint.config.mjs).
+- Docs and requirements: [`README.md`](mdc:README.md), requirements: [`.Information/requirement.md`](mdc:.Information/requirement.md), plan: [`.Information/developPlan.md`](mdc:.Information/developPlan.md).
+
+Conventions:
+- Prefer Server Components by default. Mark Client Components with "use client".
+- Keep business logic in API routes or server functions; keep UI components presentational.
