@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef, startTransition } from "react"
+import { useState, useMemo, useEffect, startTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Check, ChevronsUpDown, Search, X } from "lucide-react"
+import { Check, ChevronsUpDown, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -73,44 +73,30 @@ export function ChartCustomizer({
     return products.filter((product) => selectedIds.includes(product.id))
   }, [products, selectedIds])
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const updateURL = (productIds: number[]) => {
-    // Debounce URL updates to avoid multiple navigations on rapid clicks
-    if (debounceTimer.current) clearTimeout(debounceTimer.current)
-    debounceTimer.current = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete("products")
-      productIds.forEach(id => params.append("products", id.toString()))
-      // Use replace to avoid history spam and mark as low priority
-      startTransition(() => {
-        router.replace(`/dashboard?${params.toString()}`, { scroll: false })
-      })
-    }, 200)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("products")
+    productIds.forEach(id => params.append("products", id.toString()))
+    // Use replace to avoid history spam and mark as low priority
+    startTransition(() => {
+      router.replace(`/dashboard?${params.toString()}`, { scroll: false })
+    })
   }
 
   const handleProductToggle = (productId: number) => {
+    // Only update local state; URL is synced when the popover closes
     setSelectedIds((prev) => {
       const isSelected = prev.includes(productId)
       if (isSelected) {
-        const next = prev.filter((id) => id !== productId)
-        updateURL(next)
-        return next
+        return prev.filter((id) => id !== productId)
       } else if (prev.length < maxSelection) {
-        const next = [...prev, productId]
-        updateURL(next)
-        return next
+        return [...prev, productId]
       }
       return prev
     })
   }
 
-  const handleRemoveProduct = (productId: number) => {
-    setSelectedIds((prev) => {
-      const next = prev.filter((id) => id !== productId)
-      updateURL(next)
-      return next
-    })
-  }
+  // Removed tag close action to avoid delayed URL sync on rapid clicks
 
   const handleCurveToggle = (curve: keyof typeof enabledCurves) => {
     setEnabledCurves(prev => ({
@@ -121,14 +107,7 @@ export function ChartCustomizer({
 
   const isAtMaxSelection = selectedIds.length >= maxSelection
 
-  // Auto-select first product if none selected and products available
-  useEffect(() => {
-    if (products.length > 0 && selectedIds.length === 0) {
-      setSelectedIds([products[0].id])
-      updateURL([products[0].id])
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products.length])
+  // No auto-selection when empty; leave selection blank by design
 
   return (
     <Card className="w-full">
@@ -141,7 +120,16 @@ export function ChartCustomizer({
           <Label className="text-sm font-medium">Select Products</Label>
 
           {/* Multi-select Dropdown */}
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover 
+            open={open} 
+            onOpenChange={(next) => {
+              setOpen(next)
+              // When closing, commit the current local selection to URL once
+              if (!next) {
+                updateURL(selectedIds)
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -215,19 +203,10 @@ export function ChartCustomizer({
           {selectedProducts.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {selectedProducts.map((product) => (
-                <Badge key={product.id} variant="secondary" className="flex items-center gap-1 pr-1">
-                  <span className="truncate max-w-32">
+                <Badge key={product.id} variant="secondary" className="flex items-center pr-2">
+                  <span className="truncate max-w-40">
                     {product.name} ({product.productCode})
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => handleRemoveProduct(product.id)}
-                    aria-label={`Remove ${product.name}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
                 </Badge>
               ))}
             </div>

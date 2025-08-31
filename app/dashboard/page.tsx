@@ -101,7 +101,29 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         />
 
         {/* Chart */}
-        {selectedProducts.length > 0 && chartData.length > 0 ? (
+        {allProducts.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-muted-foreground">No Data Available</p>
+                <p className="text-sm text-muted-foreground">
+                  Please upload an Excel file to import product data first.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (Array.isArray(params.products) ? params.products.length : params.products ? 1 : 0) === 0 ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-muted-foreground">No Products Selected</p>
+                <p className="text-sm text-muted-foreground">
+                  Use the selector above to choose one or more products.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : selectedProducts.length > 0 && chartData.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>
@@ -117,17 +139,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardHeader>
             <CardContent>
               <ProductChart data={chartData} />
-            </CardContent>
-          </Card>
-        ) : allProducts.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-muted-foreground">No Data Available</p>
-                <p className="text-sm text-muted-foreground">
-                  Please upload an Excel file to import product data first.
-                </p>
-              </div>
             </CardContent>
           </Card>
         ) : (
