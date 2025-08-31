@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { ChartCustomizer } from "./ChartCustomizer"
 import { ProductChart } from "./ProductChart"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Import types from dashboard page
 import type { ProductSeries, Product } from "../app/dashboard/page"

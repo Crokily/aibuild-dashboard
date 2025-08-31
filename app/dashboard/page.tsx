@@ -1,11 +1,7 @@
 import { db } from "@/lib/db";
 import { products, dailyRecords } from "@/lib/db/schema";
-import { eq, asc, inArray } from "drizzle-orm";
+import { asc, inArray } from "drizzle-orm";
 import { DashboardClientWrapper } from "../../components/DashboardClientWrapper";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
-import Link from "next/link";
 
 // Define the type for chart data
 export interface ChartDataPoint {

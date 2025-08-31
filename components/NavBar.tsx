@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { LineChart, Upload, LayoutDashboard, LogOut, LogIn, User } from "lucide-react";
+import { Upload, LayoutDashboard, LogOut, LogIn, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ElementType } from "react";
 

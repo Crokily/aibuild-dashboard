@@ -101,9 +101,9 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
 
   // Create unified data structure for the chart
   const unifiedData = sortedDates.map(date => {
-    const dataPoint: any = { date };
+    const dataPoint: Record<string, string | number | null> = { date };
     
-    productSeries.forEach((series, index) => {
+    productSeries.forEach((series) => {
       const point = series.data.find(d => d.date === date);
       if (point) {
         dataPoint[`${series.productCode}_inventory`] = point.inventory;

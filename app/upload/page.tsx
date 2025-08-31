@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
