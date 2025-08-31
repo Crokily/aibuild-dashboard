@@ -83,26 +83,10 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
   const aiResponse = messages.find((m) => m.role === 'assistant')?.content;
   const hasAnalysis = aiResponse && aiResponse.trim().length > 0;
 
-  // Format the AI response for better display
+  // Simply process the AI response without complex parsing
   const formatResponse = (text: string) => {
-    // Split by bullet points and format
-    const lines = text.split('\n').filter(line => line.trim());
-    const analysisLines: string[] = [];
-    const recommendations: string[] = [];
-    
-    let inRecommendations = false;
-    
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
-        recommendations.push(trimmed.replace(/^[•\-*]\s*/, ''));
-        inRecommendations = true;
-      } else if (!inRecommendations && trimmed) {
-        analysisLines.push(trimmed);
-      }
-    }
-    
-    return { analysis: analysisLines.join(' '), recommendations };
+    // Keep the original format, just clean up extra whitespace
+    return text.trim();
   };
 
   // Process markdown bold formatting
@@ -111,7 +95,7 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   };
 
-  const formatted = aiResponse ? formatResponse(aiResponse) : null;
+  const formattedContent = aiResponse ? formatResponse(aiResponse) : null;
 
   if (productKPIs.length === 0) {
     return null;
@@ -177,30 +161,11 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
                 </div>
               </div>
             </div>
-          ) : formatted ? (
-            <div className="space-y-4">
-              {/* Analysis */}
-              {formatted.analysis && (
-                <p 
-                  className="text-foreground leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: processMarkdown(formatted.analysis) }}
-                />
-              )}
-              
-              {/* Recommendations */}
-              {formatted.recommendations.length > 0 && (
-                <div>
-                  <ul className="space-y-1">
-                    {formatted.recommendations.map((rec, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="text-primary mt-1.5 block h-1 w-1 rounded-full bg-current flex-shrink-0" />
-                        <span dangerouslySetInnerHTML={{ __html: processMarkdown(rec) }} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+          ) : formattedContent ? (
+            <div 
+              className="text-sm text-foreground leading-relaxed whitespace-pre-line"
+              dangerouslySetInnerHTML={{ __html: processMarkdown(formattedContent) }}
+            />
           ) : (
             <div className="text-center text-muted-foreground py-8">
               <Sparkles className="h-8 w-8 mx-auto mb-3 text-primary/60" />

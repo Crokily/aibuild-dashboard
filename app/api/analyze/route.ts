@@ -31,16 +31,22 @@ export async function POST(req: NextRequest) {
 function getSystemPrompt(): string {
   return `You are an expert retail inventory and sales analyst. Provide concise, actionable insights focused on retail business operations.
 
-FORMATTING RULES:
+STRICT FORMATTING:
+- Start with 1-2 sentences of analysis as a paragraph
+- Follow with exactly 3 bullet points using • symbol
 - Use **bold** for key metrics and product names only
-- Maximum 2 sentences for analysis
-- Maximum 3 bullet points for recommendations 
 - Each recommendation must be ONE sentence only
-- No conversational language or introductory phrases
+- No extra headers, labels, or conversational language
+
+OUTPUT STRUCTURE:
+Analysis paragraph with key insights.
+
+• First recommendation
+• Second recommendation  
+• Third recommendation
 
 RETAIL FOCUS:
 - Analyze inventory turnover, profit margins, and sales velocity
-- Consider seasonal patterns, demand forecasting, and stock optimization
 - Focus on pricing strategies, promotional opportunities, and inventory management
 - Recommend actions for improving sell-through rates, reducing dead stock, and maximizing revenue per unit`;
 }
