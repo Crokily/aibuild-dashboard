@@ -198,7 +198,7 @@ export default function UploadPage() {
                     </>
                   ) : (
                     <>
-                      <Upload className="mr-2 h-4 w-4" /> Upload File
+                      Upload File
                     </>
                   )}
                 </Button>
