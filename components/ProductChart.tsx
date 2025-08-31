@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import {
   LineChart,
   Line,
@@ -7,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -132,106 +132,163 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
   
   const maxValue = allValues.length > 0 ? Math.max(...allValues) : 1000;
 
+  // Helper for legend line styles matching the chart strokes
+  const lineSampleStyle = (color: string, variant: 'solid' | 'dashed' | 'dashdot') => {
+    const base: CSSProperties = {
+      display: 'inline-block',
+      width: 24,
+      height: 2,
+      borderRadius: 9999,
+    };
+    if (variant === 'solid') {
+      return { ...base, backgroundColor: color };
+    }
+    if (variant === 'dashed') {
+      return {
+        ...base,
+        backgroundImage: `repeating-linear-gradient(90deg, ${color}, ${color} 8px, transparent 8px, transparent 12px)`,
+      } as CSSProperties;
+    }
+    // dash-dot approximation
+    return {
+      ...base,
+      backgroundImage: `repeating-linear-gradient(90deg, ${color}, ${color} 10px, transparent 10px, transparent 13px, ${color} 13px, ${color} 15px, transparent 15px, transparent 18px)`,
+    } as CSSProperties;
+  };
+
+  const LegendItem = ({ label, color, variant }: { label: string; color: string; variant: 'solid' | 'dashed' | 'dashdot' }) => (
+    <div className="flex items-center gap-1 text-[11px] leading-4">
+      <span style={lineSampleStyle(color, variant)} />
+      <span className="truncate">{label}</span>
+    </div>
+  );
+
   return (
-    <div className="w-full h-96">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={unifiedData}
-          margin={{
-            top: 20,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-          <XAxis 
-            dataKey="date" 
-            className="text-xs"
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis 
-            className="text-xs"
-            tick={{ fontSize: 12 }}
-            domain={[0, maxValue * 1.1]}
-            tickFormatter={(value) => {
-              if (value >= 1000000) {
-                return `${(value / 1000000).toFixed(1)}M`;
-              } else if (value >= 1000) {
-                return `${(value / 1000).toFixed(1)}K`;
-              }
-              return value.toLocaleString();
+    <div className="w-full">
+      <div className="h-96">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={unifiedData}
+            margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5,
             }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend 
-            wrapperStyle={{ paddingTop: '20px' }}
-            iconType="line"
-          />
-          
-          {/* Generate lines for each product and curve combination */}
+          >
+            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+            <XAxis 
+              dataKey="date" 
+              className="text-xs"
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              className="text-xs"
+              tick={{ fontSize: 12 }}
+              domain={[0, maxValue * 1.1]}
+              tickFormatter={(value) => {
+                if (value >= 1000000) {
+                  return `${(value / 1000000).toFixed(1)}M`;
+                } else if (value >= 1000) {
+                  return `${(value / 1000).toFixed(1)}K`;
+                }
+                return value.toLocaleString();
+              }}
+            />
+            <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 50 }} />
+
+            {/* Generate lines for each product and curve combination */}
+            {productSeries.map((series, seriesIndex) => {
+              const baseColor = PRODUCT_COLORS[seriesIndex % PRODUCT_COLORS.length];
+              const lines = [] as JSX.Element[];
+              
+              // Inventory Line
+              if (enabledCurves.inventory) {
+                lines.push(
+                  <Line
+                    key={`${series.productCode}_inventory`}
+                    type="monotone"
+                    dataKey={`${series.productCode}_inventory`}
+                    stroke={baseColor}
+                    strokeWidth={2}
+                    strokeDasharray="0"
+                    dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
+                    name={`${series.productName} - Inventory`}
+                    connectNulls
+                  />
+                );
+              }
+              
+              // Procurement Line  
+              if (enabledCurves.procurement) {
+                lines.push(
+                  <Line
+                    key={`${series.productCode}_procurement`}
+                    type="monotone"
+                    dataKey={`${series.productCode}_procurement`}
+                    stroke={baseColor}
+                    strokeWidth={2}
+                    strokeDasharray="5 5" // Dashed line
+                    dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
+                    name={`${series.productName} - Procurement`}
+                    connectNulls
+                  />
+                );
+              }
+              
+              // Sales Line
+              if (enabledCurves.sales) {
+                lines.push(
+                  <Line
+                    key={`${series.productCode}_sales`}
+                    type="monotone"
+                    dataKey={`${series.productCode}_sales`}
+                    stroke={baseColor}
+                    strokeWidth={2}
+                    strokeDasharray="10 3 3 3" // Dash-dot line
+                    dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
+                    name={`${series.productName} - Sales`}
+                    connectNulls
+                  />
+                );
+              }
+              
+              return lines;
+            })}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Compact grouped legend below the chart */}
+      <div className="mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {productSeries.map((series, seriesIndex) => {
             const baseColor = PRODUCT_COLORS[seriesIndex % PRODUCT_COLORS.length];
-            const lines = [];
-            
-            // Inventory Line
-            if (enabledCurves.inventory) {
-              lines.push(
-                <Line
-                  key={`${series.productCode}_inventory`}
-                  type="monotone"
-                  dataKey={`${series.productCode}_inventory`}
-                  stroke={baseColor}
-                  strokeWidth={2}
-                  strokeDasharray="0"
-                  dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
-                  name={`${series.productName} - Inventory`}
-                  connectNulls
-                />
-              );
-            }
-            
-            // Procurement Line  
-            if (enabledCurves.procurement) {
-              lines.push(
-                <Line
-                  key={`${series.productCode}_procurement`}
-                  type="monotone"
-                  dataKey={`${series.productCode}_procurement`}
-                  stroke={baseColor}
-                  strokeWidth={2}
-                  strokeDasharray="5 5" // Dashed line
-                  dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
-                  name={`${series.productName} - Procurement`}
-                  connectNulls
-                />
-              );
-            }
-            
-            // Sales Line
-            if (enabledCurves.sales) {
-              lines.push(
-                <Line
-                  key={`${series.productCode}_sales`}
-                  type="monotone"
-                  dataKey={`${series.productCode}_sales`}
-                  stroke={baseColor}
-                  strokeWidth={2}
-                  strokeDasharray="10 3 3 3" // Dash-dot line
-                  dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
-                  name={`${series.productName} - Sales`}
-                  connectNulls
-                />
-              );
-            }
-            
-            return lines;
+            return (
+              <div key={series.productId} className="rounded-md border border-border/50 bg-muted/30 p-2">
+                <div className="flex items-baseline justify-between">
+                  <div className="text-xs font-semibold truncate pr-2">{series.productName}</div>
+                  <div className="text-[10px] text-muted-foreground truncate">{series.productCode}</div>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {enabledCurves.inventory && (
+                    <LegendItem label="Inventory" color={baseColor} variant="solid" />
+                  )}
+                  {enabledCurves.procurement && (
+                    <LegendItem label="Procurement" color={baseColor} variant="dashed" />
+                  )}
+                  {enabledCurves.sales && (
+                    <LegendItem label="Sales" color={baseColor} variant="dashdot" />
+                  )}
+                </div>
+              </div>
+            );
           })}
-        </LineChart>
-      </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
