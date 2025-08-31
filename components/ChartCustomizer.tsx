@@ -147,7 +147,7 @@ export function ChartCustomizer({
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-full justify-between text-left font-normal bg-transparent"
+                className="w-full justify-between text-left font-normal bg-transparent cursor-pointer"
               >
                 <span className="truncate">
                   {selectedProducts.length === 0
