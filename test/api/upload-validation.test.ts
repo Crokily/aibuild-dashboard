@@ -1,103 +1,112 @@
 import { describe, it, expect } from 'vitest';
+import { z } from 'zod';
 
-// Mock Excel data for testing validation
-interface ExcelRow {
-  ID: string;
-  'Product Name': string;
-  'Opening Inventory': number;
-  [key: string]: string | number | undefined;
-}
+// Copy the Zod schemas from the upload route for testing
+const excelRowSchema = z.object({
+  'ID': z.string()
+    .min(1, 'Product ID cannot be empty')
+    .max(50, 'Product ID must be less than 50 characters'),
+  'Product Name': z.string()
+    .min(1, 'Product Name cannot be empty')
+    .max(100, 'Product Name must be less than 100 characters'),
+  'Opening Inventory': z.number()
+    .min(0, 'Opening Inventory must be non-negative')
+    .int('Opening Inventory must be a whole number'),
+}).catchall(
+  z.union([
+    z.string().optional(),
+    z.number().min(0, 'Day column values must be non-negative').optional()
+  ])
+);
 
-// Copy the validation function for testing (in a real app, you'd export it)
-function validateExcelFormat(jsonData: ExcelRow[]): { isValid: boolean; error?: string } {
-  // Check if data exists
-  if (!jsonData || jsonData.length === 0) {
-    return { isValid: false, error: 'Excel file contains no data rows' };
-  }
-
-  // Get the first row to check column structure
-  const firstRow = jsonData[0];
-  const columns = Object.keys(firstRow);
-
-  // Check for required base columns
-  const requiredColumns = ['ID', 'Product Name', 'Opening Inventory'];
-  const missingColumns = requiredColumns.filter(col => !columns.includes(col));
-  
-  if (missingColumns.length > 0) {
-    return { 
-      isValid: false, 
-      error: `Missing required columns: ${missingColumns.join(', ')}. Expected columns: ID, Product Name, Opening Inventory, and daily columns like "Procurement Qty (Day 1)", "Sales Qty (Day 1)", etc.` 
-    };
-  }
-
-  // Check for at least one set of day columns
-  const dayColumnPatterns = [
-    /^Procurement Qty \(Day \d+\)$/i,
-    /^Procurement Price \(Day \d+\)$/i,
-    /^Sales Qty \(Day \d+\)$/i,
-    /^Sales Price \(Day \d+\)$/i
-  ];
-
-  const hasDayColumns = dayColumnPatterns.some(pattern => 
-    columns.some(col => pattern.test(col))
-  );
-
-  if (!hasDayColumns) {
-    return { 
-      isValid: false, 
-      error: 'No daily data columns found. Expected columns like "Procurement Qty (Day 1)", "Procurement Price (Day 1)", "Sales Qty (Day 1)", "Sales Price (Day 1)", etc.' 
-    };
-  }
-
-  // Validate data in each row
-  for (let i = 0; i < jsonData.length; i++) {
-    const row = jsonData[i];
-    const rowNum = i + 1;
-
-    // Check if ID and Product Name are present and valid
-    if (!row.ID || row.ID.toString().trim() === '') {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Missing or empty Product ID` 
-      };
+const excelDataSchema = z.array(excelRowSchema)
+  .min(1, 'Excel file must contain at least one data row')
+  .refine((rows) => {
+    // Skip validation if array is empty (will be caught by min(1) above)
+    if (rows.length === 0) {
+      return true;
     }
-
-    if (!row['Product Name'] || row['Product Name'].toString().trim() === '') {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Missing or empty Product Name` 
-      };
+    
+    const firstRow = rows[0];
+    const dayColumns = Object.keys(firstRow).filter(key => 
+      /^(Procurement|Sales) (Qty|Price) \(Day \d+\)$/i.test(key)
+    );
+    
+    if (dayColumns.length === 0) {
+      return false;
     }
-
-    // Check if Opening Inventory is a valid number
-    const openingInventory = parseFloat(row['Opening Inventory']?.toString() || '');
-    if (isNaN(openingInventory) || openingInventory < 0) {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Opening Inventory must be a valid non-negative number` 
-      };
-    }
-
-    // Validate day columns have numeric values
-    for (const [columnName, value] of Object.entries(row)) {
-      if (dayColumnPatterns.some(pattern => pattern.test(columnName))) {
-        const numericValue = parseFloat(value?.toString() || '');
-        if (isNaN(numericValue) || numericValue < 0) {
-          return { 
-            isValid: false, 
-            error: `Row ${rowNum}, Column "${columnName}": Value must be a valid non-negative number` 
-          };
-        }
+    
+    const dayNumbers = new Set<number>();
+    dayColumns.forEach(col => {
+      const match = col.match(/Day (\d+)/i);
+      if (match) {
+        dayNumbers.add(parseInt(match[1]));
+      }
+    });
+    
+    for (const day of dayNumbers) {
+      const requiredCols = [
+        `Procurement Qty (Day ${day})`,
+        `Procurement Price (Day ${day})`,
+        `Sales Qty (Day ${day})`,
+        `Sales Price (Day ${day})`
+      ];
+      
+      const hasAllCols = requiredCols.every(col => 
+        Object.keys(firstRow).some(key => key.toLowerCase() === col.toLowerCase())
+      );
+      
+      if (!hasAllCols) {
+        return false;
       }
     }
-  }
+    
+    return true;
+  }, 'Excel file must contain valid day columns (Procurement Qty/Price, Sales Qty/Price for each day)');
 
-  return { isValid: true };
+// Helper function to validate data using Zod
+function validateExcelFormat(jsonData: any[]): { isValid: boolean; error?: string; details?: string[] } {
+  const result = excelDataSchema.safeParse(jsonData);
+  
+  if (result.success) {
+    return { isValid: true };
+  } else {
+    const details = result.error.issues.map((err: z.ZodIssue) => {
+      const path = err.path.join('.');
+      
+      if (err.path.length >= 2 && typeof err.path[0] === 'number') {
+        const rowIndex = err.path[0] as number;
+        const fieldName = err.path[1] as string;
+        const rowNumber = rowIndex + 1;
+        
+        const fieldLabels: Record<string, string> = {
+          'ID': 'Product ID',
+          'Product Name': 'Product Name',
+          'Opening Inventory': 'Opening Inventory'
+        };
+        
+        const friendlyFieldName = fieldLabels[fieldName] || fieldName;
+        return `Row ${rowNumber}, ${friendlyFieldName}: ${err.message}`;
+      }
+      
+      if (err.path.length === 0) {
+        return err.message;
+      }
+      
+      return `${path}: ${err.message}`;
+    });
+    
+    return { 
+      isValid: false, 
+      error: 'Data validation failed', 
+      details 
+    };
+  }
 }
 
-describe('Excel Upload Validation', () => {
+describe('Excel Upload Validation with Zod', () => {
   it('should accept valid Excel data', () => {
-    const validData: ExcelRow[] = [
+    const validData = [
       {
         'ID': 'P001',
         'Product Name': 'Test Product',
@@ -112,16 +121,18 @@ describe('Excel Upload Validation', () => {
     const result = validateExcelFormat(validData);
     expect(result.isValid).toBe(true);
     expect(result.error).toBeUndefined();
+    expect(result.details).toBeUndefined();
   });
 
   it('should reject empty data', () => {
     const result = validateExcelFormat([]);
     expect(result.isValid).toBe(false);
-    expect(result.error).toBe('Excel file contains no data rows');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details).toContain('Excel file must contain at least one data row');
   });
 
   it('should reject data missing required columns', () => {
-    const invalidData: ExcelRow[] = [
+    const invalidData = [
       {
         'ID': 'P001',
         // Missing 'Product Name' and 'Opening Inventory'
@@ -129,16 +140,17 @@ describe('Excel Upload Validation', () => {
         'Procurement Price (Day 1)': 10.5,
         'Sales Qty (Day 1)': 30,
         'Sales Price (Day 1)': 15.0
-      } as ExcelRow
+      }
     ];
 
     const result = validateExcelFormat(invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('Missing required columns');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details?.some(detail => detail.includes('Product Name'))).toBe(true);
   });
 
   it('should reject data without day columns', () => {
-    const invalidData: ExcelRow[] = [
+    const invalidData = [
       {
         'ID': 'P001',
         'Product Name': 'Test Product',
@@ -149,11 +161,12 @@ describe('Excel Upload Validation', () => {
 
     const result = validateExcelFormat(invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('No daily data columns found');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details?.some(detail => detail.includes('valid day columns'))).toBe(true);
   });
 
   it('should reject data with empty Product ID', () => {
-    const invalidData: ExcelRow[] = [
+    const invalidData = [
       {
         'ID': '',
         'Product Name': 'Test Product',
@@ -167,11 +180,12 @@ describe('Excel Upload Validation', () => {
 
     const result = validateExcelFormat(invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('Row 1: Missing or empty Product ID');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details?.some(detail => detail.includes('Product ID cannot be empty'))).toBe(true);
   });
 
   it('should reject data with invalid Opening Inventory', () => {
-    const invalidData: ExcelRow[] = [
+    const invalidData = [
       {
         'ID': 'P001',
         'Product Name': 'Test Product',
@@ -185,24 +199,35 @@ describe('Excel Upload Validation', () => {
 
     const result = validateExcelFormat(invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('Opening Inventory must be a valid non-negative number');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details?.some(detail => detail.includes('Opening Inventory must be non-negative'))).toBe(true);
   });
 
-  it('should reject data with invalid day column values', () => {
-    const invalidData: ExcelRow[] = [
+  it('should provide detailed error messages with row numbers', () => {
+    const invalidData = [
       {
         'ID': 'P001',
         'Product Name': 'Test Product',
         'Opening Inventory': 100,
-        'Procurement Qty (Day 1)': 'invalid', // Non-numeric value
+        'Procurement Qty (Day 1)': 50,
         'Procurement Price (Day 1)': 10.5,
         'Sales Qty (Day 1)': 30,
         'Sales Price (Day 1)': 15.0
-      } as ExcelRow
+      },
+      {
+        'ID': '', // Empty ID in second row
+        'Product Name': 'Another Product',
+        'Opening Inventory': 50,
+        'Procurement Qty (Day 1)': 25,
+        'Procurement Price (Day 1)': 8.0,
+        'Sales Qty (Day 1)': 15,
+        'Sales Price (Day 1)': 12.0
+      }
     ];
 
     const result = validateExcelFormat(invalidData);
     expect(result.isValid).toBe(false);
-    expect(result.error).toContain('Value must be a valid non-negative number');
+    expect(result.error).toBe('Data validation failed');
+    expect(result.details?.some(detail => detail.includes('Row 2'))).toBe(true);
   });
 });

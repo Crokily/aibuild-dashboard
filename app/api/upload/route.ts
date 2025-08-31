@@ -1,15 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { products, dailyRecords } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-// Interface for Excel row with dynamic day columns
-interface ExcelRow {
-  ID: string;
-  'Product Name': string;
-  'Opening Inventory': number;
-  [key: string]: string | number | undefined; // For dynamic day columns
+// Zod schema for Excel row validation
+const excelRowSchema = z.object({
+  'ID': z.string()
+    .min(1, 'Product ID cannot be empty')
+    .max(50, 'Product ID must be less than 50 characters'),
+  'Product Name': z.string()
+    .min(1, 'Product Name cannot be empty')
+    .max(100, 'Product Name must be less than 100 characters'),
+  'Opening Inventory': z.number()
+    .min(0, 'Opening Inventory must be non-negative')
+    .int('Opening Inventory must be a whole number'),
+}).catchall(
+  // Allow dynamic day columns with validation
+  z.union([
+    z.string().optional(),
+    z.number().min(0, 'Day column values must be non-negative').optional()
+  ])
+);
+
+// Infer TypeScript type from Zod schema
+type ExcelRow = z.infer<typeof excelRowSchema>;
+
+// Enhanced schema for validating the entire Excel data structure
+const excelDataSchema = z.array(excelRowSchema)
+  .min(1, 'Excel file must contain at least one data row')
+  .refine((rows) => {
+    // Skip validation if array is empty (will be caught by min(1) above)
+    if (rows.length === 0) {
+      return true;
+    }
+    
+    // Check if all rows have consistent day columns
+    const firstRow = rows[0];
+    const dayColumns = Object.keys(firstRow).filter(key => 
+      /^(Procurement|Sales) (Qty|Price) \(Day \d+\)$/i.test(key)
+    );
+    
+    if (dayColumns.length === 0) {
+      return false;
+    }
+    
+    // Extract day numbers and check for completeness
+    const dayNumbers = new Set<number>();
+    dayColumns.forEach(col => {
+      const match = col.match(/Day (\d+)/i);
+      if (match) {
+        dayNumbers.add(parseInt(match[1]));
+      }
+    });
+    
+    // Check if all required columns exist for each day
+    for (const day of dayNumbers) {
+      const requiredCols = [
+        `Procurement Qty (Day ${day})`,
+        `Procurement Price (Day ${day})`,
+        `Sales Qty (Day ${day})`,
+        `Sales Price (Day ${day})`
+      ];
+      
+      const hasAllCols = requiredCols.every(col => 
+        Object.keys(firstRow).some(key => key.toLowerCase() === col.toLowerCase())
+      );
+      
+      if (!hasAllCols) {
+        return false;
+      }
+    }
+    
+    return true;
+  }, 'Excel file must contain valid day columns (Procurement Qty/Price, Sales Qty/Price for each day)');
+
+// Function to format Zod errors into user-friendly messages
+function formatValidationErrors(error: z.ZodError): string[] {
+  return error.issues.map((err: z.ZodIssue) => {
+    const path = err.path.join('.');
+    
+    // Handle array index paths (e.g., "0.ID" -> "Row 1: Product ID")
+    if (err.path.length >= 2 && typeof err.path[0] === 'number') {
+      const rowIndex = err.path[0] as number;
+      const fieldName = err.path[1] as string;
+      const rowNumber = rowIndex + 1;
+      
+      // Convert field names to user-friendly labels
+      const fieldLabels: Record<string, string> = {
+        'ID': 'Product ID',
+        'Product Name': 'Product Name',
+        'Opening Inventory': 'Opening Inventory'
+      };
+      
+      const friendlyFieldName = fieldLabels[fieldName] || fieldName;
+      return `Row ${rowNumber}, ${friendlyFieldName}: ${err.message}`;
+    }
+    
+    // Handle root-level errors
+    if (err.path.length === 0) {
+      return err.message;
+    }
+    
+    // Handle other path structures
+    return `${path}: ${err.message}`;
+  });
 }
 
 // Interface for processed daily record data
@@ -73,17 +169,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Validate Excel format and structure
-    const validationResult = validateExcelFormat(jsonData);
-    if (!validationResult.isValid) {
+    // 3. Validate Excel format and structure using Zod
+    const validationResult = excelDataSchema.safeParse(jsonData);
+    if (!validationResult.success) {
+      const errorMessages = formatValidationErrors(validationResult.error);
       return NextResponse.json(
-        { error: validationResult.error },
+        { 
+          error: 'Data validation failed',
+          details: errorMessages,
+          validationErrors: errorMessages // For backward compatibility
+        },
         { status: 400 }
       );
     }
 
-    // 4. Process and transform data
-    const processedData = processExcelData(jsonData);
+    // 4. Process and transform data (using validated data)
+    const validatedData = validationResult.data;
+    const processedData = processExcelData(validatedData);
 
     // 5. Insert data using transaction with bulk operations
     const result = await db.transaction(async (tx) => {
@@ -334,133 +436,4 @@ function extractDayColumns(row: ExcelRow): DayData[] {
     .map(([, data]) => data);
 }
 
-// Validate Excel file format and structure
-function validateExcelFormat(jsonData: ExcelRow[]): { isValid: boolean; error?: string } {
-  // Check if data exists
-  if (!jsonData || jsonData.length === 0) {
-    return { isValid: false, error: 'Excel file contains no data rows' };
-  }
-
-  // Get the first row to check column structure
-  const firstRow = jsonData[0];
-  const columns = Object.keys(firstRow);
-
-  // Check for required base columns
-  const requiredColumns = ['ID', 'Product Name', 'Opening Inventory'];
-  const missingColumns = requiredColumns.filter(col => !columns.includes(col));
-  
-  if (missingColumns.length > 0) {
-    return { 
-      isValid: false, 
-      error: `Missing required columns: ${missingColumns.join(', ')}. Expected columns: ID, Product Name, Opening Inventory, and daily columns like "Procurement Qty (Day 1)", "Sales Qty (Day 1)", etc.` 
-    };
-  }
-
-  // Check for at least one set of day columns
-  const dayColumnPatterns = [
-    /^Procurement Qty \(Day \d+\)$/i,
-    /^Procurement Price \(Day \d+\)$/i,
-    /^Sales Qty \(Day \d+\)$/i,
-    /^Sales Price \(Day \d+\)$/i
-  ];
-
-  const hasDayColumns = dayColumnPatterns.some(pattern => 
-    columns.some(col => pattern.test(col))
-  );
-
-  if (!hasDayColumns) {
-    return { 
-      isValid: false, 
-      error: 'No daily data columns found. Expected columns like "Procurement Qty (Day 1)", "Procurement Price (Day 1)", "Sales Qty (Day 1)", "Sales Price (Day 1)", etc.' 
-    };
-  }
-
-  // Validate data in each row
-  for (let i = 0; i < jsonData.length; i++) {
-    const row = jsonData[i];
-    const rowNum = i + 1;
-
-    // Check if ID and Product Name are present and valid
-    if (!row.ID || row.ID.toString().trim() === '') {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Missing or empty Product ID` 
-      };
-    }
-
-    if (!row['Product Name'] || row['Product Name'].toString().trim() === '') {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Missing or empty Product Name` 
-      };
-    }
-
-    // Check if Opening Inventory is a valid number
-    const openingInventory = parseFloat(row['Opening Inventory']?.toString() || '');
-    if (isNaN(openingInventory) || openingInventory < 0) {
-      return { 
-        isValid: false, 
-        error: `Row ${rowNum}: Opening Inventory must be a valid non-negative number` 
-      };
-    }
-
-    // Validate day columns have numeric values
-    for (const [columnName, value] of Object.entries(row)) {
-      if (dayColumnPatterns.some(pattern => pattern.test(columnName))) {
-        const numericValue = parseFloat(value?.toString() || '');
-        if (isNaN(numericValue) || numericValue < 0) {
-          return { 
-            isValid: false, 
-            error: `Row ${rowNum}, Column "${columnName}": Value must be a valid non-negative number` 
-          };
-        }
-      }
-    }
-  }
-
-  // Check for consistent day structure across all rows
-  const dayNumbers = new Set<number>();
-  columns.forEach(col => {
-    dayColumnPatterns.forEach(pattern => {
-      const match = col.match(pattern);
-      if (match) {
-        // Extract day number from column name
-        const dayMatch = col.match(/Day (\d+)/i);
-        if (dayMatch) {
-          dayNumbers.add(parseInt(dayMatch[1]));
-        }
-      }
-    });
-  });
-
-  if (dayNumbers.size === 0) {
-    return { 
-      isValid: false, 
-      error: 'No valid day columns found. Expected format: "Procurement Qty (Day 1)", "Sales Qty (Day 1)", etc.' 
-    };
-  }
-
-  // Check if all required columns exist for each day
-  const sortedDays = Array.from(dayNumbers).sort((a, b) => a - b);
-  for (const day of sortedDays) {
-    const requiredDayColumns = [
-      `Procurement Qty (Day ${day})`,
-      `Procurement Price (Day ${day})`,
-      `Sales Qty (Day ${day})`,
-      `Sales Price (Day ${day})`
-    ];
-
-    const missingDayColumns = requiredDayColumns.filter(col => 
-      !columns.some(existingCol => existingCol.toLowerCase() === col.toLowerCase())
-    );
-
-    if (missingDayColumns.length > 0) {
-      return { 
-        isValid: false, 
-        error: `Missing columns for Day ${day}: ${missingDayColumns.join(', ')}` 
-      };
-    }
-  }
-
-  return { isValid: true };
-}
+// Note: validateExcelFormat function has been replaced with Zod schema validation above
