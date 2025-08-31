@@ -37,7 +37,7 @@ export default function NavBar() {
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             <NavLink href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
-            <NavLink href="/upload" label="Import Data" icon={Upload} />
+            <NavLink href="/upload" label="Import" icon={Upload} />
           </nav>
         </div>
 
