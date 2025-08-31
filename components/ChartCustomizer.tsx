@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+//
 
 interface Product {
   id: number
@@ -43,6 +44,7 @@ export function ChartCustomizer({
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   
+  
   // Parse selected product IDs from URL
   const urlSelectedIds = useMemo(() => {
     const productsParam = searchParams.getAll("products")
@@ -61,6 +63,8 @@ export function ChartCustomizer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlSelectedIds.join(",")])
+
+  //
 
   // enabledCurves is now managed by parent component
 
@@ -87,6 +91,8 @@ export function ChartCustomizer({
       router.replace(`/dashboard?${params.toString()}`, { scroll: false })
     })
   }
+
+  //
 
   const handleProductToggle = (productId: number) => {
     // Only update local state; URL is synced when the popover closes
@@ -121,6 +127,7 @@ export function ChartCustomizer({
       </CardHeader>
 
       <CardContent className="space-y-6">
+
         {/* Product Selector Section */}
         <div className="space-y-3">
 

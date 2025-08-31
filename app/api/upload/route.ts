@@ -73,10 +73,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Process and transform data
+    // 3. Validate Excel format and structure
+    const validationResult = validateExcelFormat(jsonData);
+    if (!validationResult.isValid) {
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: 400 }
+      );
+    }
+
+    // 4. Process and transform data
     const processedData = processExcelData(jsonData);
 
-    // 4. Insert data using transaction with bulk operations
+    // 5. Insert data using transaction with bulk operations
     const result = await db.transaction(async (tx) => {
       let productsProcessed = 0;
       let recordsCreated = 0;
@@ -121,7 +130,7 @@ export async function POST(request: NextRequest) {
         allDailyRecords.push(...productRecords);
       }
 
-      // 5. Bulk insert all daily records in one operation
+              // 6. Bulk insert all daily records in one operation
       if (allDailyRecords.length > 0) {
         await tx.insert(dailyRecords).values(allDailyRecords);
         recordsCreated = allDailyRecords.length;
@@ -182,8 +191,10 @@ function processExcelData(excelData: ExcelRow[]) {
     const productCode = row.ID?.toString().trim();
     const productName = row['Product Name']?.toString().trim();
 
+    // Skip invalid rows (validation should have caught these, but double-check)
     if (!productCode || !productName) {
-      continue; // Skip invalid rows
+      console.warn('Skipping row with missing product code or name:', row);
+      continue;
     }
 
     // Add product to list
@@ -195,6 +206,12 @@ function processExcelData(excelData: ExcelRow[]) {
     // Extract day columns and transform to daily records
     const dayColumns = extractDayColumns(row);
     const totalDays = dayColumns.length;
+    
+    if (totalDays === 0) {
+      console.warn(`No valid day columns found for product ${productCode}, skipping`);
+      continue;
+    }
+    
     let previousClosingInventory = 0;
 
     for (let dayIndex = 0; dayIndex < dayColumns.length; dayIndex++) {
@@ -315,4 +332,135 @@ function extractDayColumns(row: ExcelRow): DayData[] {
   return Array.from(dayMap.entries())
     .sort(([a], [b]) => a - b)
     .map(([, data]) => data);
+}
+
+// Validate Excel file format and structure
+function validateExcelFormat(jsonData: ExcelRow[]): { isValid: boolean; error?: string } {
+  // Check if data exists
+  if (!jsonData || jsonData.length === 0) {
+    return { isValid: false, error: 'Excel file contains no data rows' };
+  }
+
+  // Get the first row to check column structure
+  const firstRow = jsonData[0];
+  const columns = Object.keys(firstRow);
+
+  // Check for required base columns
+  const requiredColumns = ['ID', 'Product Name', 'Opening Inventory'];
+  const missingColumns = requiredColumns.filter(col => !columns.includes(col));
+  
+  if (missingColumns.length > 0) {
+    return { 
+      isValid: false, 
+      error: `Missing required columns: ${missingColumns.join(', ')}. Expected columns: ID, Product Name, Opening Inventory, and daily columns like "Procurement Qty (Day 1)", "Sales Qty (Day 1)", etc.` 
+    };
+  }
+
+  // Check for at least one set of day columns
+  const dayColumnPatterns = [
+    /^Procurement Qty \(Day \d+\)$/i,
+    /^Procurement Price \(Day \d+\)$/i,
+    /^Sales Qty \(Day \d+\)$/i,
+    /^Sales Price \(Day \d+\)$/i
+  ];
+
+  const hasDayColumns = dayColumnPatterns.some(pattern => 
+    columns.some(col => pattern.test(col))
+  );
+
+  if (!hasDayColumns) {
+    return { 
+      isValid: false, 
+      error: 'No daily data columns found. Expected columns like "Procurement Qty (Day 1)", "Procurement Price (Day 1)", "Sales Qty (Day 1)", "Sales Price (Day 1)", etc.' 
+    };
+  }
+
+  // Validate data in each row
+  for (let i = 0; i < jsonData.length; i++) {
+    const row = jsonData[i];
+    const rowNum = i + 1;
+
+    // Check if ID and Product Name are present and valid
+    if (!row.ID || row.ID.toString().trim() === '') {
+      return { 
+        isValid: false, 
+        error: `Row ${rowNum}: Missing or empty Product ID` 
+      };
+    }
+
+    if (!row['Product Name'] || row['Product Name'].toString().trim() === '') {
+      return { 
+        isValid: false, 
+        error: `Row ${rowNum}: Missing or empty Product Name` 
+      };
+    }
+
+    // Check if Opening Inventory is a valid number
+    const openingInventory = parseFloat(row['Opening Inventory']?.toString() || '');
+    if (isNaN(openingInventory) || openingInventory < 0) {
+      return { 
+        isValid: false, 
+        error: `Row ${rowNum}: Opening Inventory must be a valid non-negative number` 
+      };
+    }
+
+    // Validate day columns have numeric values
+    for (const [columnName, value] of Object.entries(row)) {
+      if (dayColumnPatterns.some(pattern => pattern.test(columnName))) {
+        const numericValue = parseFloat(value?.toString() || '');
+        if (isNaN(numericValue) || numericValue < 0) {
+          return { 
+            isValid: false, 
+            error: `Row ${rowNum}, Column "${columnName}": Value must be a valid non-negative number` 
+          };
+        }
+      }
+    }
+  }
+
+  // Check for consistent day structure across all rows
+  const dayNumbers = new Set<number>();
+  columns.forEach(col => {
+    dayColumnPatterns.forEach(pattern => {
+      const match = col.match(pattern);
+      if (match) {
+        // Extract day number from column name
+        const dayMatch = col.match(/Day (\d+)/i);
+        if (dayMatch) {
+          dayNumbers.add(parseInt(dayMatch[1]));
+        }
+      }
+    });
+  });
+
+  if (dayNumbers.size === 0) {
+    return { 
+      isValid: false, 
+      error: 'No valid day columns found. Expected format: "Procurement Qty (Day 1)", "Sales Qty (Day 1)", etc.' 
+    };
+  }
+
+  // Check if all required columns exist for each day
+  const sortedDays = Array.from(dayNumbers).sort((a, b) => a - b);
+  for (const day of sortedDays) {
+    const requiredDayColumns = [
+      `Procurement Qty (Day ${day})`,
+      `Procurement Price (Day ${day})`,
+      `Sales Qty (Day ${day})`,
+      `Sales Price (Day ${day})`
+    ];
+
+    const missingDayColumns = requiredDayColumns.filter(col => 
+      !columns.some(existingCol => existingCol.toLowerCase() === col.toLowerCase())
+    );
+
+    if (missingDayColumns.length > 0) {
+      return { 
+        isValid: false, 
+        error: `Missing columns for Day ${day}: ${missingDayColumns.join(', ')}` 
+      };
+    }
+  }
+
+  return { isValid: true };
 }

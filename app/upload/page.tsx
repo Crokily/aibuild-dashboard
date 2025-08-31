@@ -187,14 +187,18 @@ export default function UploadPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button type="submit" disabled={!file || isUploading} className="flex-1">
+                <Button 
+                  type="submit" 
+                  disabled={!file || isUploading} 
+                  className={`flex-1 ${!file || isUploading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                >
                   {isUploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
                     </>
                   ) : (
                     <>
-                      <Upload className="mr-2 h-4 w-4" /> Upload File
+                      Upload File
                     </>
                   )}
                 </Button>

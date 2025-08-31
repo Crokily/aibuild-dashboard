@@ -4,6 +4,8 @@ import { useState } from "react"
 import { ChartCustomizer } from "./ChartCustomizer"
 import { ProductChart } from "./ProductChart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 // Import types from dashboard page
 import type { ProductSeries, Product } from "../app/dashboard/page"
@@ -63,11 +65,16 @@ export function DashboardClientWrapper({
       ) : allProducts.length === 0 ? (
         <Card>
           <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-4">
               <p className="text-lg font-medium text-muted-foreground">No Data Available</p>
               <p className="text-sm text-muted-foreground">
                 Please upload an Excel file to import product data first.
               </p>
+              <div>
+                <Button asChild className="cursor-pointer">
+                  <Link href="/upload">Go to Upload</Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -77,7 +84,7 @@ export function DashboardClientWrapper({
             <div className="text-center space-y-3">
               <p className="text-lg font-medium text-muted-foreground">No Records Found</p>
               <p className="text-sm text-muted-foreground">
-                No daily records found for the selected products.
+                No daily records found for the selected products. Try a different date range.
               </p>
             </div>
           </CardContent>
