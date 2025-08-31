@@ -4,6 +4,7 @@ import { asc, inArray } from "drizzle-orm";
 import { DashboardClientWrapper } from "../../components/DashboardClientWrapper";
 import { ErrorState } from "../../components/ErrorBoundary";
 import { DataAnalysis, type ProductKPI } from "../../components/DataAnalysis";
+import { AIAnalysis } from "../../components/AIAnalysis";
 //
 
 // Define the type for chart data
@@ -216,7 +217,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         {/* Data Analysis Section - Only show when products are selected */}
         {selectedProducts.length > 0 && productKPIs.length > 0 && (
-          <DataAnalysis productKPIs={productKPIs} />
+          <>
+            <DataAnalysis productKPIs={productKPIs} />
+            <AIAnalysis productKPIs={productKPIs} />
+          </>
         )}
       </div>
     </div>
