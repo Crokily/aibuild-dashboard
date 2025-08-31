@@ -115,7 +115,6 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
           AI-Powered Insights
         </h3>
         
@@ -142,7 +141,7 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
         }`}
         onClick={!isLoading && !hasAnalysis ? triggerAnalysis : undefined}
       >
-        <CardContent className="pt-4">
+        <CardContent className="">
           {isLoading ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-muted-foreground">
