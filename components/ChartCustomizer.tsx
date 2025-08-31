@@ -116,11 +116,13 @@ export function ChartCustomizer({
 
   return (
     <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Chart Customization</CardTitle>
+      </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Product Selector Section */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Select Products</Label>
 
           {/* Multi-select Dropdown */}
           <Popover 
