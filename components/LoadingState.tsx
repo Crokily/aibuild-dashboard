@@ -21,9 +21,15 @@ export function LoadingState({
   };
 
   const LoadingContent = () => (
-    <div className="flex items-center justify-center space-x-2">
-      <Loader2 className={`${sizeClasses[size]} animate-spin text-primary`} />
-      <span className="text-muted-foreground">{message}</span>
+    <div className="flex flex-col items-center justify-center space-y-4">
+      {/* Animated loading icon with theme colors */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg animate-pulse"></div>
+        <div className="relative bg-accent/10 p-3 rounded-full border border-border/50">
+          <Loader2 className={`${sizeClasses[size]} animate-spin text-primary`} />
+        </div>
+      </div>
+      <span className="text-muted-foreground font-medium tracking-wide">{message}</span>
     </div>
   );
 
@@ -41,7 +47,7 @@ export function LoadingState({
     case "card":
     default:
       return (
-        <Card>
+        <Card className="border-border shadow-lg">
           <CardContent className="flex items-center justify-center py-12">
             <LoadingContent />
           </CardContent>
@@ -53,22 +59,43 @@ export function LoadingState({
 // Skeleton loading component for more specific use cases
 export function SkeletonLoader({ className = "" }: { className?: string }) {
   return (
-    <div className={`animate-pulse bg-muted rounded ${className}`} />
+    <div className={`animate-pulse bg-muted/50 rounded-lg border border-border/30 ${className}`} />
   );
 }
 
 // Chart skeleton specifically for dashboard
 export function ChartSkeleton() {
   return (
-    <Card>
+    <Card className="border-border shadow-lg">
       <CardContent className="p-6">
-        <div className="space-y-4">
-          <SkeletonLoader className="h-4 w-48" />
-          <SkeletonLoader className="h-64 w-full" />
-          <div className="flex space-x-4">
-            <SkeletonLoader className="h-3 w-16" />
-            <SkeletonLoader className="h-3 w-16" />
-            <SkeletonLoader className="h-3 w-16" />
+        <div className="space-y-6">
+          {/* Title skeleton */}
+          <div className="space-y-2">
+            <SkeletonLoader className="h-6 w-48" />
+            <SkeletonLoader className="h-4 w-32" />
+          </div>
+          
+          {/* Chart area skeleton */}
+          <div className="relative">
+            <SkeletonLoader className="h-64 w-full" />
+            {/* Subtle overlay pattern */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/20 to-transparent animate-pulse"></div>
+          </div>
+          
+          {/* Legend skeleton */}
+          <div className="flex justify-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <SkeletonLoader className="h-3 w-3 rounded-full" />
+              <SkeletonLoader className="h-3 w-16" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <SkeletonLoader className="h-3 w-3 rounded-full" />
+              <SkeletonLoader className="h-3 w-16" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <SkeletonLoader className="h-3 w-3 rounded-full" />
+              <SkeletonLoader className="h-3 w-16" />
+            </div>
           </div>
         </div>
       </CardContent>

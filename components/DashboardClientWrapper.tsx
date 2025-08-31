@@ -71,7 +71,7 @@ export function DashboardClientWrapper({
                 Please upload an Excel file to import product data first.
               </p>
               <div>
-                <Button asChild>
+                <Button asChild className="cursor-pointer">
                   <Link href="/upload">Go to Upload</Link>
                 </Button>
               </div>
