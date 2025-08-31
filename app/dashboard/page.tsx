@@ -3,6 +3,7 @@ import { products, dailyRecords } from "@/lib/db/schema";
 import { asc, inArray } from "drizzle-orm";
 import { DashboardClientWrapper } from "../../components/DashboardClientWrapper";
 import { ErrorState } from "../../components/ErrorBoundary";
+import { DataAnalysis, type ProductKPI } from "../../components/DataAnalysis";
 //
 
 // Define the type for chart data
@@ -40,6 +41,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   let allProducts: Product[] = [];
   let productSeries: ProductSeries[] = [];
   let selectedProducts: Product[] = [];
+  let productKPIs: ProductKPI[] = [];
 
   try {
     // Get all products for the selector with error handling
@@ -97,7 +99,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           return acc;
         }, {} as Record<number, typeof allRecords>);
 
-        // Transform data for each product
+        // Transform data for each product and calculate KPIs
         productSeries = selectedProducts.map(product => {
           const records = recordsByProduct[product.id] || [];
           
@@ -124,6 +126,66 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             data: chartData
           };
         });
+
+        // Calculate KPIs for each selected product
+        productKPIs = selectedProducts.map(product => {
+          const records = recordsByProduct[product.id] || [];
+          
+          if (records.length === 0) {
+            return {
+              productId: product.id,
+              productName: product.name,
+              productCode: product.productCode,
+              totalRevenue: 0,
+              totalCost: 0,
+              totalUnitsSold: 0,
+              totalUnitsProcured: 0,
+              averageSellingPrice: 0,
+              averageProcurementPrice: 0,
+              endingInventory: 0,
+              netAmount: 0,
+              sellThroughRate: 0,
+            };
+          }
+
+          // Calculate totals
+          const totalRevenue = records.reduce((sum, record) => 
+            sum + (record.salesQty * parseFloat(record.salesPrice)), 0);
+          const totalCost = records.reduce((sum, record) => 
+            sum + (record.procurementQty * parseFloat(record.procurementPrice)), 0);
+          const totalUnitsSold = records.reduce((sum, record) => sum + record.salesQty, 0);
+          const totalUnitsProcured = records.reduce((sum, record) => sum + record.procurementQty, 0);
+          
+          // Calculate averages
+          const averageSellingPrice = totalUnitsSold > 0 ? totalRevenue / totalUnitsSold : 0;
+          const averageProcurementPrice = totalUnitsProcured > 0 ? totalCost / totalUnitsProcured : 0;
+          
+          // Get ending inventory (last record's closing inventory)
+          const endingInventory = records.length > 0 ? records[records.length - 1].closingInventory : 0;
+          
+          // Calculate net amount
+          const netAmount = totalRevenue - totalCost;
+          
+          // Calculate sell-through rate
+          const openingInventory = records.length > 0 ? records[0].openingInventory : 0;
+          const totalAvailable = openingInventory + totalUnitsProcured;
+          const sellThroughRate = totalAvailable > 0 ? (totalUnitsSold / totalAvailable) * 100 : 0;
+
+          return {
+            productId: product.id,
+            productName: product.name,
+            productCode: product.productCode,
+            totalRevenue,
+            totalCost,
+            totalUnitsSold,
+            totalUnitsProcured,
+            averageSellingPrice,
+            averageProcurementPrice,
+            endingInventory,
+            netAmount,
+            sellThroughRate,
+          };
+        });
       } catch (error) {
         console.error('Failed to fetch daily records:', error);
         // Continue with empty data - the UI will handle this gracefully
@@ -145,13 +207,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
 
-
         {/* Dashboard Client Components */}
         <DashboardClientWrapper
           allProducts={allProducts}
           productSeries={productSeries}
           selectedProducts={selectedProducts}
         />
+
+        {/* Data Analysis Section - Only show when products are selected */}
+        {selectedProducts.length > 0 && productKPIs.length > 0 && (
+          <DataAnalysis productKPIs={productKPIs} />
+        )}
       </div>
     </div>
   );
