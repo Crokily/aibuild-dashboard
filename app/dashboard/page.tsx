@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { products, dailyRecords } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { ProductSelector } from "../../components/ProductSelector";
+import { ChartCustomizer } from "../../components/ChartCustomizer";
 import { ProductChart } from "../../components/ProductChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,41 +34,50 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // Get all products for the selector
   const allProducts = await db.select().from(products).orderBy(asc(products.productCode));
 
-  // Determine selected product ID from URL params
-  const selectedProductId = params.productId
-    ? parseInt(params.productId as string)
-    : allProducts[0]?.id;
+  // Get selected product IDs from URL params (support multiple products)
+  const selectedProductIds = params.products 
+    ? (Array.isArray(params.products) ? params.products : [params.products])
+        .map(id => parseInt(id as string))
+        .filter(id => !isNaN(id))
+    : [];
 
   let chartData: ChartDataPoint[] = [];
-  let selectedProduct: Product | undefined;
+  let selectedProducts: Product[] = [];
 
-  if (selectedProductId && allProducts.length > 0) {
-    // Find the selected product
-    selectedProduct = allProducts.find(p => p.id === selectedProductId);
+  if (selectedProductIds.length > 0 && allProducts.length > 0) {
+    // Find the selected products
+    selectedProducts = allProducts.filter(p => selectedProductIds.includes(p.id));
 
-    // Get daily records for the selected product
-    const records = await db
-      .select()
-      .from(dailyRecords)
-      .where(eq(dailyRecords.productId, selectedProductId))
-      .orderBy(asc(dailyRecords.recordDate));
+    // For now, we'll show data for the first selected product to maintain compatibility
+    // TODO: Update ProductChart to support multiple products
+    const firstSelectedProductId = selectedProductIds[0];
+    const firstSelectedProduct = selectedProducts[0];
 
-    // Transform data for chart
-    chartData = records.map(record => {
-      const procurementAmount = record.procurementQty * parseFloat(record.procurementPrice);
-      const salesAmount = record.salesQty * parseFloat(record.salesPrice);
-      
-      return {
-        date: new Date(record.recordDate).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric' 
-        }),
-        inventory: record.closingInventory,
-        procurementAmount,
-        salesAmount,
-        recordDate: record.recordDate,
-      };
-    });
+    if (firstSelectedProduct) {
+      // Get daily records for the first selected product
+      const records = await db
+        .select()
+        .from(dailyRecords)
+        .where(eq(dailyRecords.productId, firstSelectedProductId))
+        .orderBy(asc(dailyRecords.recordDate));
+
+      // Transform data for chart
+      chartData = records.map(record => {
+        const procurementAmount = record.procurementQty * parseFloat(record.procurementPrice);
+        const salesAmount = record.salesQty * parseFloat(record.salesPrice);
+        
+        return {
+          date: new Date(record.recordDate).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          inventory: record.closingInventory,
+          procurementAmount,
+          salesAmount,
+          recordDate: record.recordDate,
+        };
+      });
+    }
   }
 
   return (
@@ -85,31 +94,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {/* Upload button removed; navigation available in top bar */}
         </div>
 
-        {/* Product Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Selection</CardTitle>
-            <CardDescription>
-              Choose a product to view its procurement, sales, and inventory data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProductSelector 
-              products={allProducts} 
-              selectedProductId={selectedProductId}
-            />
-          </CardContent>
-        </Card>
+        {/* Chart Customization */}
+        <ChartCustomizer 
+          products={allProducts} 
+          maxSelection={5}
+        />
 
         {/* Chart */}
-        {selectedProduct && chartData.length > 0 ? (
+        {selectedProducts.length > 0 && chartData.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>
-                {selectedProduct.name} ({selectedProduct.productCode})
+                {selectedProducts.length === 1 
+                  ? `${selectedProducts[0].name} (${selectedProducts[0].productCode})`
+                  : `Comparison of ${selectedProducts.length} Products`
+                }
               </CardTitle>
               <CardDescription>
                 Daily trends showing inventory levels, procurement amounts, and sales amounts
+                {selectedProducts.length > 1 && " (Currently showing first product - multi-product support coming soon)"}
               </CardDescription>
             </CardHeader>
             <CardContent>
