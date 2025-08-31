@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo, useEffect, startTransition } from "react"
+import { useState, useMemo, useEffect, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Check, ChevronsUpDown, Search } from "lucide-react"
+import { Check, ChevronsUpDown, Search, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Product {
   id: number
@@ -40,8 +41,12 @@ export function ChartCustomizer({
 }: ChartCustomizerProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [dateRange, setDateRange] = useState<"all" | "last7" | "thisMonth" | "custom">("all")
+  const [fromDate, setFromDate] = useState<string>("")
+  const [toDate, setToDate] = useState<string>("")
   
   // Parse selected product IDs from URL
   const urlSelectedIds = useMemo(() => {
@@ -61,6 +66,28 @@ export function ChartCustomizer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlSelectedIds.join(",")])
+
+  // Parse and sync date range from URL
+  useEffect(() => {
+    const rangeParam = searchParams.get("range")
+    const fromParam = searchParams.get("from") || ""
+    const toParam = searchParams.get("to") || ""
+
+    if (rangeParam === "last7" || rangeParam === "thisMonth") {
+      if (dateRange !== rangeParam) setDateRange(rangeParam)
+      if (fromDate !== "") setFromDate("")
+      if (toDate !== "") setToDate("")
+    } else if (rangeParam === "custom") {
+      if (dateRange !== "custom") setDateRange("custom")
+      if (fromDate !== fromParam) setFromDate(fromParam)
+      if (toDate !== toParam) setToDate(toParam)
+    } else {
+      if (dateRange !== "all") setDateRange("all")
+      if (fromDate !== "") setFromDate("")
+      if (toDate !== "") setToDate("")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("range"), searchParams.get("from"), searchParams.get("to")])
 
   // enabledCurves is now managed by parent component
 
@@ -83,6 +110,31 @@ export function ChartCustomizer({
     params.delete("products")
     productIds.forEach(id => params.append("products", id.toString()))
     // Use replace to avoid history spam and mark as low priority
+    startTransition(() => {
+      router.replace(`/dashboard?${params.toString()}`, { scroll: false })
+    })
+  }
+
+  const commitDateRange = (
+    nextRange: "all" | "last7" | "thisMonth" | "custom",
+    nextFrom?: string,
+    nextTo?: string
+  ) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (nextRange === "all") {
+      params.delete("range");
+      params.delete("from");
+      params.delete("to");
+    } else if (nextRange === "last7" || nextRange === "thisMonth") {
+      params.set("range", nextRange)
+      params.delete("from")
+      params.delete("to")
+    } else {
+      params.set("range", "custom")
+      if (nextFrom) params.set("from", nextFrom); else params.delete("from")
+      if (nextTo) params.set("to", nextTo); else params.delete("to")
+    }
+
     startTransition(() => {
       router.replace(`/dashboard?${params.toString()}`, { scroll: false })
     })
@@ -117,10 +169,92 @@ export function ChartCustomizer({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Chart Customization</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle>Chart Customization</CardTitle>
+          {isPending && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Applying filters...
+            </div>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Date Range Section */}
+        <div className="space-y-3">
+          <Label className="text-sm font-normal">Date Range</Label>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <Select
+              value={dateRange}
+              onValueChange={(val) => {
+                const next = val as typeof dateRange
+                setDateRange(next)
+                if (next === "all" || next === "last7" || next === "thisMonth") {
+                  commitDateRange(next)
+                }
+              }}
+            >
+              <SelectTrigger className="w-48" size="sm">
+                <SelectValue placeholder="Select range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="last7">Last 7 days</SelectItem>
+                <SelectItem value="thisMonth">This month</SelectItem>
+                <SelectItem value="custom">Custom...</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {dateRange === "custom" && (
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="fromDate" className="text-xs text-muted-foreground">From</Label>
+                  <Input
+                    id="fromDate"
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="h-8 w-40"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="toDate" className="text-xs text-muted-foreground">To</Label>
+                  <Input
+                    id="toDate"
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="h-8 w-40"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      commitDateRange("custom", fromDate || undefined, toDate || undefined)
+                    }}
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFromDate("")
+                      setToDate("")
+                      commitDateRange("all")
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
         {/* Product Selector Section */}
         <div className="space-y-3">
 

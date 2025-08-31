@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { products, dailyRecords } from "@/lib/db/schema";
-import { asc, inArray } from "drizzle-orm";
+import { and, asc, gte, inArray, lte } from "drizzle-orm";
 import { DashboardClientWrapper } from "../../components/DashboardClientWrapper";
+import { resolveDateRange } from "@/lib/date-range";
 
 // Define the type for chart data
 export interface ChartDataPoint {
@@ -44,6 +45,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .filter(id => !isNaN(id))
     : [];
 
+  // Date range params
+  const rangeParam = (Array.isArray(params.range) ? params.range[0] : (params.range as string | undefined)) ?? null;
+  const fromParam = (Array.isArray(params.from) ? params.from[0] : (params.from as string | undefined)) ?? null;
+  const toParam = (Array.isArray(params.to) ? params.to[0] : (params.to as string | undefined)) ?? null;
+  const resolvedRange = resolveDateRange({ range: rangeParam, from: fromParam, to: toParam });
+
   let productSeries: ProductSeries[] = [];
   let selectedProducts: Product[] = [];
 
@@ -52,10 +59,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     selectedProducts = allProducts.filter(p => selectedProductIds.includes(p.id));
 
     // Get daily records for ALL selected products at once
+    // Build where clause with optional date range
+    const conditions = [inArray(dailyRecords.productId, selectedProductIds)];
+    if (resolvedRange.key !== 'all') {
+      if (resolvedRange.from) conditions.push(gte(dailyRecords.recordDate, resolvedRange.from));
+      if (resolvedRange.to) conditions.push(lte(dailyRecords.recordDate, resolvedRange.to));
+    }
+    const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions as [typeof conditions[number], typeof conditions[number], ...typeof conditions]);
+
     const allRecords = await db
       .select()
       .from(dailyRecords)
-      .where(inArray(dailyRecords.productId, selectedProductIds))
+      .where(whereClause)
       .orderBy(asc(dailyRecords.productId), asc(dailyRecords.recordDate));
 
     // Group records by product ID
