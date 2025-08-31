@@ -173,7 +173,7 @@ function processExcelData(excelData: ExcelRow[]) {
     closingInventory: number;
   }> = [];
 
-  // Define the base date (Day 1 = today)
+  // Define the base date (today)
   const baseDate = new Date();
   baseDate.setHours(0, 0, 0, 0); // Set to start of day
 
@@ -194,12 +194,14 @@ function processExcelData(excelData: ExcelRow[]) {
 
     // Extract day columns and transform to daily records
     const dayColumns = extractDayColumns(row);
+    const totalDays = dayColumns.length;
     let previousClosingInventory = 0;
 
     for (let dayIndex = 0; dayIndex < dayColumns.length; dayIndex++) {
       const dayData = dayColumns[dayIndex];
       const recordDate = new Date(baseDate);
-      recordDate.setDate(baseDate.getDate() + dayIndex);
+      // Calculate date from past to present: Day 1 = earliest date, Last Day = today
+      recordDate.setDate(baseDate.getDate() - (totalDays - 1 - dayIndex));
 
       // Calculate inventory
       const openingInventory = dayIndex === 0 ? dayData.openingInventory : previousClosingInventory;
