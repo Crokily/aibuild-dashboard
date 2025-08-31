@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brain, RotateCcw, X, Sparkles } from 'lucide-react';
+import { RotateCcw, X, Sparkles } from 'lucide-react';
 import type { ProductKPI } from './DataAnalysis';
 
 interface AIAnalysisProps {
@@ -13,6 +13,12 @@ interface AIAnalysisProps {
 export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset AI content when productKPIs change
+  useEffect(() => {
+    setMessages([]);
+    setIsLoading(false);
+  }, [productKPIs]);
 
   // Manual trigger function for click
   const triggerAnalysis = useCallback(async () => {
@@ -121,10 +127,10 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
         {hasAnalysis && !isLoading && (
           <div className="flex gap-2">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={handleRegenerate}
-              className="cursor-pointer"
+              className="cursor-pointer bg-primary hover:bg-primary/90"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Regenerate
