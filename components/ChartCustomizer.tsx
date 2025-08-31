@@ -116,9 +116,7 @@ export function ChartCustomizer({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Chart Customization</CardTitle>
-      </CardHeader>
+
       <CardContent className="space-y-6">
         {/* Product Selector Section */}
         <div className="space-y-3">
@@ -222,7 +220,6 @@ export function ChartCustomizer({
 
         {/* Data Curves Section */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Data Curves</Label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox

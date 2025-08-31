@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import React, { type CSSProperties } from "react";
 import {
   LineChart,
   Line,
@@ -71,10 +71,10 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 // Color palette for different products using CSS variables
 const PRODUCT_COLORS = [
   'var(--chart-1)', // Chart primary
-  'var(--chart-2)', // Chart secondary
-  'oklch(0.5778 0.0759 124.1573)', // Chart tertiary
+  'var(--primary)', // Chart secondary
+  'oklch(0.5778 0.0759 150.1573)', // Chart tertiary
   'oklch(0.1778 0.7759 52.1573)', // Destructive color
-  'var(--chart-5)', // Muted foreground
+  'var(--secondary-foreground)', // Muted foreground
 ];
 
 export function ProductChart({ productSeries, enabledCurves }: ProductChartProps) {
@@ -200,7 +200,7 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
             {/* Generate lines for each product and curve combination */}
             {productSeries.map((series, seriesIndex) => {
               const baseColor = PRODUCT_COLORS[seriesIndex % PRODUCT_COLORS.length];
-              const lines = [] as JSX.Element[];
+              const lines = [] as React.ReactElement[];
               
               // Inventory Line
               if (enabledCurves.inventory) {

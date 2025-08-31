@@ -104,15 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Analyze procurement, sales, and inventory trends for your products
-            </p>
-          </div>
-          {/* Upload button removed; navigation available in top bar */}
-        </div>
+
 
         {/* Dashboard Client Components */}
         <DashboardClientWrapper

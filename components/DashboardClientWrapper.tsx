@@ -52,10 +52,6 @@ export function DashboardClientWrapper({
                 : `Comparison of ${selectedProducts.length} Products`
               }
             </CardTitle>
-            <CardDescription>
-              Daily trends showing inventory levels, procurement amounts, and sales amounts
-              {selectedProducts.length > 1 && " across multiple products"}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <ProductChart 

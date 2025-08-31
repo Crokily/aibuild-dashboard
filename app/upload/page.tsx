@@ -99,23 +99,12 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
       <div className="mx-auto max-w-4xl space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Import Your Data</h1>
-          <p className="text-muted-foreground">
-            Import your product data from Excel files to visualize trends
-          </p>
-        </div>
-
         {/* Upload Form */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Excel File Upload
             </CardTitle>
-            <CardDescription>
-              Upload an Excel file (.xlsx or .xls) containing product data with procurement, sales, and inventory information.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
