@@ -97,7 +97,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-6">
+    <div className="min-h-full bg-gradient-to-br from-background via-background to-accent/10 p-6">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Upload Form */}
         <Card>
