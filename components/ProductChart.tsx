@@ -87,16 +87,22 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
   }
 
   // Combine all data points for unified date axis
-  const allDates = new Set<string>();
+  const dateMap = new Map<string, string>(); // Map from display date to recordDate
   productSeries.forEach(series => {
-    series.data.forEach(point => allDates.add(point.date));
+    series.data.forEach(point => {
+      dateMap.set(point.date, point.recordDate);
+    });
   });
-  
-  const sortedDates = Array.from(allDates).sort((a, b) => {
-    // Sort by date - need to convert back to compare properly
-    const dateA = new Date(a + ', 2024'); // Add year for parsing
-    const dateB = new Date(b + ', 2024');
-    return dateA.getTime() - dateB.getTime();
+
+  // Sort by actual record dates to handle multi-year data correctly
+  const sortedDates = Array.from(dateMap.keys()).sort((a, b) => {
+    const recordDateA = dateMap.get(a);
+    const recordDateB = dateMap.get(b);
+    if (recordDateA && recordDateB) {
+      return new Date(recordDateA).getTime() - new Date(recordDateB).getTime();
+    }
+    // Fallback to string comparison if recordDate is missing
+    return a.localeCompare(b);
   });
 
   // Create unified data structure for the chart
