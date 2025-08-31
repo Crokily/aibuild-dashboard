@@ -203,7 +203,7 @@ export function ChartCustomizer({
           {selectedProducts.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {selectedProducts.map((product) => (
-                <Badge key={product.id} variant="secondary" className="flex items-center pr-2">
+                <Badge key={product.id} variant="secondary" className="flex items-center gap-1 pr-1">
                   <span className="truncate max-w-40">
                     {product.name} ({product.productCode})
                   </span>
