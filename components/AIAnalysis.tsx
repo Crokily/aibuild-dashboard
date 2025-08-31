@@ -99,6 +99,12 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
     return { analysis: analysisLines.join(' '), recommendations };
   };
 
+  // Process markdown bold formatting
+  const processMarkdown = (text: string) => {
+    // Convert **text** to <strong>text</strong>
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };
+
   const formatted = aiResponse ? formatResponse(aiResponse) : null;
 
   if (productKPIs.length === 0) {
@@ -106,7 +112,7 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
@@ -136,7 +142,7 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
         }`}
         onClick={!isLoading && !hasAnalysis ? triggerAnalysis : undefined}
       >
-        <CardContent className="pt-6">
+        <CardContent className="pt-4">
           {isLoading ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -170,22 +176,20 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
             <div className="space-y-4">
               {/* Analysis */}
               {formatted.analysis && (
-                <p className="text-foreground leading-relaxed">
-                  {formatted.analysis}
-                </p>
+                <p 
+                  className="text-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: processMarkdown(formatted.analysis) }}
+                />
               )}
               
               {/* Recommendations */}
               {formatted.recommendations.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-2">
-                    Recommendations:
-                  </h4>
                   <ul className="space-y-1">
                     {formatted.recommendations.map((rec, index) => (
                       <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <span className="text-primary mt-1.5 block h-1 w-1 rounded-full bg-current flex-shrink-0" />
-                        <span>{rec}</span>
+                        <span dangerouslySetInnerHTML={{ __html: processMarkdown(rec) }} />
                       </li>
                     ))}
                   </ul>

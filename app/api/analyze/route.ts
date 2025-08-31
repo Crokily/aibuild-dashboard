@@ -29,16 +29,20 @@ export async function POST(req: NextRequest) {
 }
 
 function getSystemPrompt(): string {
-  return `You are an expert retail business analyst. Provide extremely concise, data-driven insights in a professional, direct tone. 
+  return `You are an expert retail inventory and sales analyst. Provide concise, actionable insights focused on retail business operations.
 
-RULES:
-- Never use conversational fluff or introductory phrases
-- Get straight to the point
+FORMATTING RULES:
+- Use **bold** for key metrics and product names only
 - Maximum 2 sentences for analysis
-- Maximum 3 bullet points for recommendations
+- Maximum 3 bullet points for recommendations 
 - Each recommendation must be ONE sentence only
-- Use specific numbers from the data
-- Focus on actionable insights only`;
+- No conversational language or introductory phrases
+
+RETAIL FOCUS:
+- Analyze inventory turnover, profit margins, and sales velocity
+- Consider seasonal patterns, demand forecasting, and stock optimization
+- Focus on pricing strategies, promotional opportunities, and inventory management
+- Recommend actions for improving sell-through rates, reducing dead stock, and maximizing revenue per unit`;
 }
 
 function generateAnalysisPrompt(productKPIs: ProductKPI[]): string {
@@ -46,16 +50,16 @@ function generateAnalysisPrompt(productKPIs: ProductKPI[]): string {
     const kpi = productKPIs[0];
     const profitMargin = kpi.totalRevenue > 0 ? ((kpi.netAmount / kpi.totalRevenue) * 100).toFixed(1) : '0';
     
-    return `Analyze performance for ${kpi.productName}:
+    return `Analyze retail performance for **${kpi.productName}**:
 
-Revenue: $${kpi.totalRevenue.toLocaleString()}
-Units Sold: ${kpi.totalUnitsSold.toLocaleString()}
-Net Amount: $${kpi.netAmount.toLocaleString()}
-Profit Margin: ${profitMargin}%
-Sell-Through Rate: ${kpi.sellThroughRate.toFixed(1)}%
-Ending Inventory: ${kpi.endingInventory.toLocaleString()} units
+• Revenue: **$${kpi.totalRevenue.toLocaleString()}**
+• Units Sold: **${kpi.totalUnitsSold.toLocaleString()}**
+• Net Profit: **$${kpi.netAmount.toLocaleString()}**
+• Profit Margin: **${profitMargin}%**
+• Sell-Through Rate: **${kpi.sellThroughRate.toFixed(1)}%**
+• Current Stock: **${kpi.endingInventory.toLocaleString()} units**
 
-Provide analysis and actionable recommendations.`;
+Analyze inventory performance and profitability. Provide 3 specific retail management recommendations.`;
   } else {
     // Multi-product comparison
     const sortedByRevenue = [...productKPIs].sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -64,16 +68,16 @@ Provide analysis and actionable recommendations.`;
     const topPerformer = sortedByRevenue[0];
     const worstPerformer = sortedByProfit[productKPIs.length - 1];
 
-    return `Compare these ${productKPIs.length} products:
+    return `Compare these ${productKPIs.length} retail products:
 
 ${productKPIs.map(kpi => {
   const margin = kpi.totalRevenue > 0 ? ((kpi.netAmount / kpi.totalRevenue) * 100).toFixed(1) : '0';
-  return `${kpi.productName}: Revenue $${kpi.totalRevenue.toLocaleString()}, Net $${kpi.netAmount.toLocaleString()}, Margin ${margin}%`;
+  return `**${kpi.productName}**: Revenue $${kpi.totalRevenue.toLocaleString()}, Profit $${kpi.netAmount.toLocaleString()}, Margin ${margin}%, Sell-Through ${kpi.sellThroughRate.toFixed(1)}%`;
 }).join('\n')}
 
-Top revenue: ${topPerformer.productName}
-Worst profit: ${worstPerformer.productName}
+**Top Performer**: ${topPerformer.productName} (revenue)
+**Lowest Profit**: ${worstPerformer.productName}
 
-Identify key insights and portfolio optimization recommendations.`;
+Analyze portfolio performance and provide 3 specific retail optimization actions.`;
   }
 }
