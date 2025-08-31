@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { products, dailyRecords } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
-import { ChartCustomizer } from "../../components/ChartCustomizer";
-import { ProductChart } from "../../components/ProductChart";
+import { eq, asc, inArray } from "drizzle-orm";
+import { DashboardClientWrapper } from "../../components/DashboardClientWrapper";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
@@ -15,6 +14,14 @@ export interface ChartDataPoint {
   procurementAmount: number;
   salesAmount: number;
   recordDate: string; // Raw date for sorting
+}
+
+// Define the type for multi-product chart data
+export interface ProductSeries {
+  productId: number;
+  productName: string;
+  productCode: string;
+  data: ChartDataPoint[];
 }
 
 export interface Product {
@@ -41,28 +48,34 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .filter(id => !isNaN(id))
     : [];
 
-  let chartData: ChartDataPoint[] = [];
+  let productSeries: ProductSeries[] = [];
   let selectedProducts: Product[] = [];
 
   if (selectedProductIds.length > 0 && allProducts.length > 0) {
     // Find the selected products
     selectedProducts = allProducts.filter(p => selectedProductIds.includes(p.id));
 
-    // For now, we'll show data for the first selected product to maintain compatibility
-    // TODO: Update ProductChart to support multiple products
-    const firstSelectedProductId = selectedProductIds[0];
-    const firstSelectedProduct = selectedProducts[0];
+    // Get daily records for ALL selected products at once
+    const allRecords = await db
+      .select()
+      .from(dailyRecords)
+      .where(inArray(dailyRecords.productId, selectedProductIds))
+      .orderBy(asc(dailyRecords.productId), asc(dailyRecords.recordDate));
 
-    if (firstSelectedProduct) {
-      // Get daily records for the first selected product
-      const records = await db
-        .select()
-        .from(dailyRecords)
-        .where(eq(dailyRecords.productId, firstSelectedProductId))
-        .orderBy(asc(dailyRecords.recordDate));
+    // Group records by product ID
+    const recordsByProduct = allRecords.reduce((acc, record) => {
+      if (!acc[record.productId]) {
+        acc[record.productId] = [];
+      }
+      acc[record.productId].push(record);
+      return acc;
+    }, {} as Record<number, typeof allRecords>);
 
-      // Transform data for chart
-      chartData = records.map(record => {
+    // Transform data for each product
+    productSeries = selectedProducts.map(product => {
+      const records = recordsByProduct[product.id] || [];
+      
+      const chartData: ChartDataPoint[] = records.map(record => {
         const procurementAmount = record.procurementQty * parseFloat(record.procurementPrice);
         const salesAmount = record.salesQty * parseFloat(record.salesPrice);
         
@@ -77,7 +90,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           recordDate: record.recordDate,
         };
       });
-    }
+
+      return {
+        productId: product.id,
+        productName: product.name,
+        productCode: product.productCode,
+        data: chartData
+      };
+    });
   }
 
   return (
@@ -94,65 +114,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {/* Upload button removed; navigation available in top bar */}
         </div>
 
-        {/* Chart Customization */}
-        <ChartCustomizer 
-          products={allProducts} 
-          maxSelection={5}
+        {/* Dashboard Client Components */}
+        <DashboardClientWrapper
+          allProducts={allProducts}
+          productSeries={productSeries}
+          selectedProducts={selectedProducts}
         />
-
-        {/* Chart */}
-        {allProducts.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-muted-foreground">No Data Available</p>
-                <p className="text-sm text-muted-foreground">
-                  Please upload an Excel file to import product data first.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (Array.isArray(params.products) ? params.products.length : params.products ? 1 : 0) === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-muted-foreground">No Products Selected</p>
-                <p className="text-sm text-muted-foreground">
-                  Use the selector above to choose one or more products.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : selectedProducts.length > 0 && chartData.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedProducts.length === 1 
-                  ? `${selectedProducts[0].name} (${selectedProducts[0].productCode})`
-                  : `Comparison of ${selectedProducts.length} Products`
-                }
-              </CardTitle>
-              <CardDescription>
-                Daily trends showing inventory levels, procurement amounts, and sales amounts
-                {selectedProducts.length > 1 && " (Currently showing first product - multi-product support coming soon)"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductChart data={chartData} />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-muted-foreground">No Records Found</p>
-                <p className="text-sm text-muted-foreground">
-                  No daily records found for the selected product.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

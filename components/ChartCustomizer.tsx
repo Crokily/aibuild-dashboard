@@ -19,14 +19,24 @@ interface Product {
   name: string
 }
 
+interface EnabledCurves {
+  inventory: boolean
+  procurement: boolean
+  sales: boolean
+}
+
 interface ChartCustomizerProps {
   products: Product[]
   maxSelection?: number
+  enabledCurves: EnabledCurves
+  onCurvesChange: (curves: EnabledCurves) => void
 }
 
 export function ChartCustomizer({
   products,
   maxSelection = 5,
+  enabledCurves,
+  onCurvesChange,
 }: ChartCustomizerProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -52,12 +62,7 @@ export function ChartCustomizer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlSelectedIds.join(",")])
 
-  // Local state for curve toggles (not in URL)
-  const [enabledCurves, setEnabledCurves] = useState({
-    inventory: true,
-    procurement: true,
-    sales: true,
-  })
+  // enabledCurves is now managed by parent component
 
   // Filter products based on search query
   const filteredProducts = useMemo(() => {
@@ -98,11 +103,11 @@ export function ChartCustomizer({
 
   // Removed tag close action to avoid delayed URL sync on rapid clicks
 
-  const handleCurveToggle = (curve: keyof typeof enabledCurves) => {
-    setEnabledCurves(prev => ({
-      ...prev,
-      [curve]: !prev[curve],
-    }))
+  const handleCurveToggle = (curve: keyof EnabledCurves) => {
+    onCurvesChange({
+      ...enabledCurves,
+      [curve]: !enabledCurves[curve],
+    })
   }
 
   const isAtMaxSelection = selectedIds.length >= maxSelection
