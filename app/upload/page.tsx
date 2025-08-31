@@ -16,6 +16,8 @@ export default function UploadPage() {
       productsProcessed: number;
       recordsCreated: number;
     };
+    details?: string[]; // For detailed validation errors
+    validationErrors?: string[]; // For backward compatibility
   } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -172,12 +174,31 @@ export default function UploadPage() {
                     ) : (
                       <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
                     )}
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1">
                       <p className="font-medium">{uploadResult.message}</p>
+                      
+                      {/* Success summary */}
                       {uploadResult.success && uploadResult.summary && (
                         <div className="text-sm">
                           <p>Products processed: {uploadResult.summary.productsProcessed}</p>
                           <p>Records created: {uploadResult.summary.recordsCreated}</p>
+                        </div>
+                      )}
+                      
+                      {/* Detailed validation errors */}
+                      {!uploadResult.success && (uploadResult.details || uploadResult.validationErrors) && (
+                        <div className="mt-3">
+                          <p className="text-sm font-medium mb-2">Validation Issues:</p>
+                          <div className="bg-red-100 border border-red-200 rounded-md p-3 max-h-40 overflow-y-auto">
+                            <ul className="text-sm space-y-1">
+                              {(uploadResult.details || uploadResult.validationErrors || []).map((error, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <span className="text-red-500 mt-0.5">•</span>
+                                  <span className="text-red-800">{error}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
                       )}
                     </div>
