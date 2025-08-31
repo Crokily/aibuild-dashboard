@@ -68,18 +68,13 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   return null;
 };
 
-// Color palette for different products
+// Color palette for different products using CSS variables
 const PRODUCT_COLORS = [
-  '#3B82F6', // Blue
-  '#EF4444', // Red  
-  '#10B981', // Green
-  '#F59E0B', // Yellow
-  '#8B5CF6', // Purple
-  '#F97316', // Orange
-  '#06B6D4', // Cyan
-  '#84CC16', // Lime
-  '#EC4899', // Pink
-  '#6B7280', // Gray
+  'var(--chart-1)', // Chart primary
+  'var(--chart-2)', // Chart secondary
+  'oklch(0.5778 0.0759 124.1573)', // Chart tertiary
+  'oklch(0.1778 0.7759 52.1573)', // Destructive color
+  'var(--chart-5)', // Muted foreground
 ];
 
 export function ProductChart({ productSeries, enabledCurves }: ProductChartProps) {
