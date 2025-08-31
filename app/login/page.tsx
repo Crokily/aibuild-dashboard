@@ -166,7 +166,7 @@ function LoginForm() {
                 <span className="text-muted-foreground">Don&apos;t have an account?</span>
                 <Link
                   href="/register"
-                  className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1"
+                  className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1 cursor-pointer"
                 >
                   Register now
                 </Link>

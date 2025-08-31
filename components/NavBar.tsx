@@ -15,7 +15,7 @@ const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; ico
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+        "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors cursor-pointer",
         active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
       )}
     >
@@ -32,7 +32,7 @@ export default function NavBar() {
     <header className="w-full border-b bg-secondary/90 backdrop-blur supports-[backdrop-filter]:bg-secondary/70 shadow-sm">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold cursor-pointer">
             <span>AIBUILD</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">

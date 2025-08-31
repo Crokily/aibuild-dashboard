@@ -92,7 +92,7 @@ export default function RegisterPage() {
                 </p>
               </div>
               <Button asChild className="w-full">
-                <Link href="/login">Login Now</Link>
+                <Link href="/login" className="cursor-pointer">Login Now</Link>
               </Button>
             </CardContent>
           </Card>
@@ -259,7 +259,7 @@ export default function RegisterPage() {
                 <span className="text-muted-foreground">Already have an account?</span>
                 <Link
                   href="/login"
-                  className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1"
+                  className="font-semibold text-primary hover:text-primary/80 transition-colors ml-1 cursor-pointer"
                 >
                   Login now
                 </Link>
