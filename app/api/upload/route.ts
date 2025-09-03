@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { products, dailyRecords } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 // Zod schema for Excel row validation
 const excelRowSchema = z.object({
@@ -130,6 +132,13 @@ interface DayData {
 }
 
 export async function POST(request: NextRequest) {
+  // Check authentication
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     // 1. Enhanced file validation
     const formData = await request.formData();

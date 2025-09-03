@@ -86,7 +86,12 @@ export default function UploadPage() {
         const fileInput = document.getElementById("file-upload") as HTMLInputElement | null;
         if (fileInput) fileInput.value = "";
       } else {
-        setUploadResult({ success: false, message: result.error || "Upload failed" });
+        setUploadResult({
+          success: false,
+          message: result.error || "Upload failed",
+          details: result.details,
+          validationErrors: result.validationErrors,
+        });
       }
     } catch (error) {
       console.error("Upload error:", error);

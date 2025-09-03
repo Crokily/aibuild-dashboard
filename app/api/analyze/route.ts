@@ -1,9 +1,17 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import type { ProductKPI } from '@/components/DataAnalysis';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 export async function POST(req: NextRequest) {
+  // Check authentication
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { productKPIs }: { productKPIs: ProductKPI[] } = await req.json();
 
