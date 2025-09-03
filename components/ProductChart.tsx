@@ -217,7 +217,7 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
                     dataKey={`${series.productCode}_inventory`}
                     stroke={baseColor}
                     strokeWidth={2}
-                    strokeDasharray="0"
+                    strokeDasharray="10 3 3 3" // Changed to dash-dot line
                     dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
                     activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
                     name={`${series.productName} - Inventory`}
@@ -253,7 +253,7 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
                     dataKey={`${series.productCode}_sales`}
                     stroke={baseColor}
                     strokeWidth={2}
-                    strokeDasharray="10 3 3 3" // Dash-dot line
+                    strokeDasharray="0" // Changed to solid line
                     dot={{ fill: baseColor, strokeWidth: 2, r: 3 }}
                     activeDot={{ r: 5, stroke: baseColor, strokeWidth: 2 }}
                     name={`${series.productName} - Sales`}
@@ -281,13 +281,13 @@ export function ProductChart({ productSeries, enabledCurves }: ProductChartProps
                 </div>
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   {enabledCurves.inventory && (
-                    <LegendItem label="Inventory" color={baseColor} variant="solid" />
+                    <LegendItem label="Inventory" color={baseColor} variant="dashdot" />
                   )}
                   {enabledCurves.procurement && (
                     <LegendItem label="Procurement" color={baseColor} variant="dashed" />
                   )}
                   {enabledCurves.sales && (
-                    <LegendItem label="Sales" color={baseColor} variant="dashdot" />
+                    <LegendItem label="Sales" color={baseColor} variant="solid" />
                   )}
                 </div>
               </div>
