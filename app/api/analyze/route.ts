@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const prompt = generateAnalysisPrompt(productKPIs);
 
     const result = await streamText({
-      model: openai('gpt-5-nano'),
+      model: openai('gpt-4.1-nano'),
       system: getSystemPrompt(),
       prompt,
       temperature: 0.3, // Lower temperature for more focused analysis

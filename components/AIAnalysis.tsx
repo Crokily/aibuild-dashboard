@@ -54,9 +54,10 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
         const { done, value } = await reader.read();
         if (done) break;
         
-        const chunk = decoder.decode(value);
+        // Use streaming decode to avoid buffering multibyte chars
+        const chunk = decoder.decode(value, { stream: true });
         content += chunk;
-        
+
         // Update messages with streaming content
         setMessages([{ role: 'assistant', content }]);
       }
@@ -132,7 +133,12 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
         onClick={!isLoading && !hasAnalysis ? triggerAnalysis : undefined}
       >
         <CardContent className="">
-          {isLoading ? (
+          {formattedContent ? (
+            <div
+              className="text-sm text-foreground leading-relaxed whitespace-pre-line"
+              dangerouslySetInnerHTML={{ __html: processMarkdown(formattedContent) }}
+            />
+          ) : isLoading ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Sparkles className="h-4 w-4 animate-pulse text-primary" />
@@ -149,7 +155,7 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
                   <X className="h-3 w-3" />
                 </Button>
               </div>
-              
+
               {/* Animated skeleton */}
               <div className="space-y-3">
                 <div className="h-4 bg-muted/50 rounded animate-pulse" />
@@ -161,11 +167,6 @@ export function AIAnalysis({ productKPIs }: AIAnalysisProps) {
                 </div>
               </div>
             </div>
-          ) : formattedContent ? (
-            <div 
-              className="text-sm text-foreground leading-relaxed whitespace-pre-line"
-              dangerouslySetInnerHTML={{ __html: processMarkdown(formattedContent) }}
-            />
           ) : (
             <div className="text-center text-muted-foreground py-8">
               <Sparkles className="h-8 w-8 mx-auto mb-3 text-primary/60" />
